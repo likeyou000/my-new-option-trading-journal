@@ -173,3 +173,22 @@ Stage Summary:
 - Complete REST API for all features
 - AI integration using z-ai-web-dev-sdk
 - Demo data seeding endpoint
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Fix existing bugs, add weekday accuracy chart, make app responsive, recommend APIs
+
+Work Log:
+- Fixed backtest API crash: initialCapital was passed as String instead of Float, causing Prisma validation error. Added parseFloat() conversion.
+- Fixed equity curve NaN values in backtest by guarding against NaN in equity calculations.
+- Created new WeekdayAccuracyChart component showing win rate by trading day (Mon-Fri) with color-coded bars and detail strip.
+- Added WeekdayAccuracyChart to Dashboard prominently after stats cards.
+- Made all components responsive for mobile and iPad: calendar (smaller cells, abbreviated day names), trade history (hidden columns on mobile, full-screen dialog), live market (stacked stats, responsive selects), AI analyzer (scrollable tabs, touch-friendly buttons), backtesting (single column form on mobile), add trade (touch targets), reports (smaller charts on mobile), win/loss chart (stacked layout on mobile), stats cards, weekday accuracy chart.
+- Lint clean, no runtime errors.
+
+Stage Summary:
+- Backtest API fixed (parseFloat for initialCapital, NaN guard for equity)
+- New "Accuracy by Trading Day" chart on Dashboard showing Mon-Fri win rates
+- Full responsive design across all 10+ components for mobile and iPad
+- All APIs functional, no errors

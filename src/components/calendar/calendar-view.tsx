@@ -60,10 +60,11 @@ export function CalendarView() {
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1))
   const goToToday = () => setCurrentDate(new Date())
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dayNamesFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dayNamesShort = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h3 className="text-2xl font-bold tracking-tight">Calendar View</h3>
         <p className="text-muted-foreground text-sm">Daily P&L overview on a calendar</p>
@@ -74,7 +75,7 @@ export function CalendarView() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Monthly P&L</p>
-            <p className={`text-xl font-bold ${monthlyPnl.total >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+            <p className={`text-lg sm:text-xl font-bold ${monthlyPnl.total >= 0 ? "text-emerald-500" : "text-red-500"}`}>
               ₹{monthlyPnl.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </p>
           </CardContent>
@@ -82,13 +83,13 @@ export function CalendarView() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Total Trades</p>
-            <p className="text-xl font-bold">{monthlyPnl.tradeCount}</p>
+            <p className="text-lg sm:text-xl font-bold">{monthlyPnl.tradeCount}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Avg Daily P&L</p>
-            <p className={`text-xl font-bold ${monthlyPnl.total / Math.max(monthlyPnl.tradeCount, 1) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+            <p className={`text-lg sm:text-xl font-bold ${monthlyPnl.total / Math.max(monthlyPnl.tradeCount, 1) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
               ₹{(monthlyPnl.tradeCount > 0 ? monthlyPnl.total / monthlyPnl.tradeCount : 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </p>
           </CardContent>
@@ -101,13 +102,13 @@ export function CalendarView() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold">{monthName}</CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={goToToday}>
+              <Button variant="outline" size="sm" className="h-9" onClick={goToToday}>
                 Today
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={nextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -116,15 +117,16 @@ export function CalendarView() {
         <CardContent>
           <div className="grid grid-cols-7 gap-1">
             {/* Day Headers */}
-            {dayNames.map(day => (
+            {dayNamesFull.map((day, i) => (
               <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
-                {day}
+                <span className="sm:hidden">{dayNamesShort[i]}</span>
+                <span className="hidden sm:inline">{day}</span>
               </div>
             ))}
 
             {/* Empty cells before first day */}
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-20" />
+              <div key={`empty-${i}`} className="h-14 sm:h-20" />
             ))}
 
             {/* Day cells */}
@@ -138,7 +140,7 @@ export function CalendarView() {
                 <div
                   key={day}
                   className={cn(
-                    "h-20 rounded-lg border p-2 transition-colors",
+                    "h-14 sm:h-20 rounded-lg border p-1 sm:p-2 transition-colors",
                     isToday && "ring-2 ring-emerald-500",
                     dayData
                       ? dayData.pnl >= 0
@@ -149,20 +151,20 @@ export function CalendarView() {
                 >
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "text-xs font-medium",
+                      "text-[10px] sm:text-xs font-medium",
                       isToday ? "text-emerald-500" : "text-foreground"
                     )}>
                       {day}
                     </span>
                     {dayData && (
-                      <Badge variant="outline" className="text-[10px] h-4 px-1">
+                      <Badge variant="outline" className="text-[8px] sm:text-[10px] h-3 sm:h-4 px-0.5 sm:px-1">
                         {dayData.count}T
                       </Badge>
                     )}
                   </div>
                   {dayData && (
                     <p className={cn(
-                      "text-xs font-bold mt-1",
+                      "text-[10px] sm:text-xs font-bold mt-0.5 sm:mt-1",
                       dayData.pnl >= 0 ? "text-emerald-500" : "text-red-500"
                     )}>
                       ₹{dayData.pnl.toLocaleString('en-IN')}

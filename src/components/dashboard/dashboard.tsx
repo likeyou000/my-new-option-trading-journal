@@ -6,6 +6,7 @@ import { PnlChart } from "./pnl-chart"
 import { WinLossChart } from "./win-loss-chart"
 import { StrategyChart } from "./strategy-chart"
 import { DailyPnlChart } from "./daily-pnl-chart"
+import { WeekdayAccuracyChart } from "./weekday-accuracy-chart"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 
@@ -21,10 +22,10 @@ export function Dashboard() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold tracking-tight">Trading Overview</h3>
+          <h3 className="text-xl sm:text-2xl font-bold tracking-tight">Trading Overview</h3>
           <p className="text-muted-foreground text-sm">Your trading performance at a glance</p>
         </div>
         <Button
@@ -34,11 +35,14 @@ export function Dashboard() {
           disabled={isFetching}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
       <StatsCards data={data} isLoading={isLoading} />
+
+      {/* Weekday Accuracy - Prominent placement */}
+      <WeekdayAccuracyChart data={data?.weekdayPerformance || []} />
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <PnlChart data={data?.cumulativePnl || []} />

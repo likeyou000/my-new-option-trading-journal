@@ -24,7 +24,7 @@ export function Reports() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
           <h3 className="text-2xl font-bold tracking-tight">Reports</h3>
           <p className="text-muted-foreground text-sm">Detailed performance analytics</p>
@@ -43,14 +43,14 @@ export function Reports() {
   const adv = data?.advanced || {}
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h3 className="text-2xl font-bold tracking-tight">Reports</h3>
         <p className="text-muted-foreground text-sm">Detailed performance analytics</p>
       </div>
 
       <Tabs defaultValue="performance" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-2 max-w-md h-11">
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="advanced">Advanced Analytics</TabsTrigger>
         </TabsList>
@@ -148,7 +148,7 @@ export function Reports() {
               <CardTitle className="text-sm font-medium">Strategy-wise Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[300px] w-full">
                 <BarChart data={data?.strategyPerformance || []} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis dataKey="name" className="text-xs" tick={{ fontSize: 10 }} />
@@ -170,7 +170,7 @@ export function Reports() {
               <CardTitle className="text-sm font-medium">Symbol-wise Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[300px] w-full">
                 <BarChart data={data?.symbolPerformance || []} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis dataKey="name" className="text-xs" tick={{ fontSize: 10 }} />
@@ -193,7 +193,7 @@ export function Reports() {
                 <CardTitle className="text-sm font-medium">Weekday Performance</CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
                   <BarChart data={data?.weekdayPerformance || []} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis dataKey="name" className="text-xs" tick={{ fontSize: 9 }} />
@@ -217,7 +217,7 @@ export function Reports() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
                   <BarChart data={data?.emotionalAnalysis || []} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis dataKey="name" className="text-xs" tick={{ fontSize: 10 }} />

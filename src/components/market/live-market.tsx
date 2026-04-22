@@ -96,7 +96,7 @@ export function LiveMarket() {
       </div>
 
       <Tabs defaultValue="watchlist" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-2 max-w-md h-11">
           <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
           <TabsTrigger value="option-chain">Option Chain</TabsTrigger>
         </TabsList>
@@ -110,11 +110,11 @@ export function LiveMarket() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">{quote.name}</p>
-                      <p className="text-2xl font-bold">₹{formatNum(quote.price)}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">{quote.name}</p>
+                      <p className="text-xl sm:text-2xl font-bold">₹{formatNum(quote.price)}</p>
                     </div>
                     <div className="text-right">
-                      <p className={cn("text-lg font-bold", quote.change >= 0 ? "text-emerald-500" : "text-red-500")}>
+                      <p className={cn("text-base sm:text-lg font-bold", quote.change >= 0 ? "text-emerald-500" : "text-red-500")}>
                         {quote.change >= 0 ? '+' : ''}{quote.change.toFixed(2)}
                       </p>
                       <Badge className={cn("text-xs", quote.changePercent >= 0 ? "bg-emerald-500/15 text-emerald-500" : "bg-red-500/15 text-red-500")}>
@@ -201,7 +201,7 @@ export function LiveMarket() {
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-3 items-center">
                 <Select value={optionSymbol} onValueChange={setOptionSymbol}>
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-full sm:w-[160px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -212,7 +212,7 @@ export function LiveMarket() {
                 
                 {expiryDates.length > 0 && (
                   <Select value={selectedExpiry || expiryDates[0] || ''} onValueChange={setSelectedExpiry}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Select Expiry" />
                     </SelectTrigger>
                     <SelectContent>
@@ -225,7 +225,7 @@ export function LiveMarket() {
                   </Select>
                 )}
 
-                <div className="flex gap-4 ml-auto">
+                <div className="flex gap-3 sm:gap-4 sm:ml-auto w-full sm:w-auto">
                   <div className="text-center">
                     <p className="text-[10px] text-muted-foreground">Underlying</p>
                     <p className="text-sm font-bold">₹{formatNum(underlyingValue)}</p>

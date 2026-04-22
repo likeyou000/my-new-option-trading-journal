@@ -103,8 +103,8 @@ export function StatsCards({ data, isLoading }: StatsCardsProps) {
                       {card.value}
                     </p>
                   </div>
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${card.bg}`}>
-                    <Icon className={`h-5 w-5 ${card.color}`} />
+                  <div className={`h-9 w-9 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center ${card.bg}`}>
+                    <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
                   </div>
                 </div>
               </CardContent>

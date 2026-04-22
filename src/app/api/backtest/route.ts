@@ -35,8 +35,10 @@ export async function POST(request: Request) {
     const {
       name, symbol, startDate, endDate, strategy,
       entryCondition, exitCondition, stopLoss, takeProfit,
-      initialCapital = 100000,
+      initialCapital: rawCapital = 100000,
     } = body
+
+    const initialCapital = parseFloat(String(rawCapital)) || 100000
 
     // Simulate backtest based on historical trade data
     const trades = await db.trade.findMany({
@@ -69,9 +71,10 @@ export async function POST(request: Request) {
       const drawdown = ((maxCapital - capital) / maxCapital) * 100
       if (drawdown > maxDrawdown) maxDrawdown = drawdown
 
+      const equityValue = Math.round(capital * 100) / 100
       equityCurve.push({
         date: trade.date.toISOString().split('T')[0],
-        equity: Math.round(capital * 100) / 100,
+        equity: isNaN(equityValue) ? initialCapital : equityValue,
       })
 
       tradeList.push({

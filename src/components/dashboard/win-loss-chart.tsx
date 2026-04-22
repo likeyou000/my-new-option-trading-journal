@@ -31,8 +31,8 @@ export function WinLossChart({ data }: WinLossChartProps) {
         <CardTitle className="text-sm font-medium">Win vs Loss</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4">
-          <ChartContainer config={chartConfig} className="h-[200px] w-[200px]">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] w-[160px] sm:w-[200px]">
             <PieChart>
               <Pie
                 data={chartData}
@@ -50,7 +50,7 @@ export function WinLossChart({ data }: WinLossChartProps) {
               <ChartTooltip content={<ChartTooltipContent />} />
             </PieChart>
           </ChartContainer>
-          <div className="flex flex-col gap-2 text-sm">
+          <div className="flex flex-col gap-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-emerald-500" />
               <span className="text-muted-foreground">Wins</span>

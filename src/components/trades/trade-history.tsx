@@ -112,7 +112,7 @@ export function TradeHistory() {
               />
             </div>
             <Select value={filterStrategy} onValueChange={setFilterStrategy}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="Strategy" />
               </SelectTrigger>
               <SelectContent>
@@ -123,7 +123,7 @@ export function TradeHistory() {
               </SelectContent>
             </Select>
             <Select value={filterOutcome} onValueChange={setFilterOutcome}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder="Outcome" />
               </SelectTrigger>
               <SelectContent>
@@ -149,17 +149,17 @@ export function TradeHistory() {
                     <div className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
                   <TableHead>Symbol</TableHead>
-                  <TableHead>Direction</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => toggleSort("entryPrice")}>
+                  <TableHead className="hidden md:table-cell">Direction</TableHead>
+                  <TableHead className="cursor-pointer hidden md:table-cell" onClick={() => toggleSort("entryPrice")}>
                     <div className="flex items-center gap-1">Entry <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
-                  <TableHead>Exit</TableHead>
+                  <TableHead className="hidden md:table-cell">Exit</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => toggleSort("pnl")}>
                     <div className="flex items-center gap-1">P&L <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
-                  <TableHead>R:R</TableHead>
-                  <TableHead>Strategy</TableHead>
-                  <TableHead>Outcome</TableHead>
+                  <TableHead className="hidden lg:table-cell">R:R</TableHead>
+                  <TableHead className="hidden sm:table-cell">Strategy</TableHead>
+                  <TableHead className="hidden sm:table-cell">Outcome</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -188,7 +188,7 @@ export function TradeHistory() {
                           {new Date(trade.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                         </TableCell>
                         <TableCell className="font-medium">{trade.symbol as string}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <Badge
                             variant="outline"
                             className={trade.direction === "LONG"
@@ -200,17 +200,17 @@ export function TradeHistory() {
                             {trade.direction as string}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">₹{(trade.entryPrice as number).toFixed(2)}</TableCell>
-                        <TableCell className="font-mono text-xs">{trade.exitPrice ? `₹${(trade.exitPrice as number).toFixed(2)}` : "-"}</TableCell>
+                        <TableCell className="font-mono text-xs hidden md:table-cell">₹{(trade.entryPrice as number).toFixed(2)}</TableCell>
+                        <TableCell className="font-mono text-xs hidden md:table-cell">{trade.exitPrice ? `₹${(trade.exitPrice as number).toFixed(2)}` : "-"}</TableCell>
                         <TableCell className={pnl > 0 ? "text-emerald-500 font-medium" : pnl < 0 ? "text-red-500 font-medium" : ""}>
                           ₹{pnl.toFixed(2)}
                           <span className="text-xs ml-1">({pnlPercent.toFixed(1)}%)</span>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{(trade.rrRatio as number)?.toFixed(2) || "-"}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-mono text-xs hidden lg:table-cell">{(trade.rrRatio as number)?.toFixed(2) || "-"}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge variant="secondary" className="text-xs">{(trade.strategy as string) || "-"}</Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge
                             className={
                               (trade.outcome as string) === "SUCCESS" ? "bg-emerald-500/15 text-emerald-500" :
@@ -227,7 +227,7 @@ export function TradeHistory() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
                               onClick={() => setSelectedTrade(trade)}
                             >
                               <Eye className="h-4 w-4" />
@@ -235,7 +235,7 @@ export function TradeHistory() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
                               onClick={() => {
                                 setEditingTradeId(trade.id as string)
                                 setCurrentView("add-trade")
@@ -246,7 +246,7 @@ export function TradeHistory() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-600"
+                              className="h-9 w-9 text-red-500 hover:text-red-600"
                               onClick={() => deleteMutation.mutate(trade.id as string)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -265,7 +265,7 @@ export function TradeHistory() {
 
       {/* Trade Detail Dialog */}
       <Dialog open={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {(selectedTrade?.symbol as string)} - {new Date(selectedTrade?.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}

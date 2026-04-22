@@ -169,7 +169,7 @@ export function AddTradeForm() {
   const isEditing = !!editingTradeId && !!editData?.trade
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-4 sm:space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold tracking-tight">
@@ -355,19 +355,19 @@ export function AddTradeForm() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground">P&L</p>
-                  <p className={`text-lg font-bold ${calculatedPnl >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                  <p className={`text-base sm:text-lg font-bold ${calculatedPnl >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                     ₹{calculatedPnl.toFixed(2)}
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground">P&L %</p>
-                  <p className={`text-lg font-bold ${calculatedPnlPercent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                  <p className={`text-base sm:text-lg font-bold ${calculatedPnlPercent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                     {calculatedPnlPercent.toFixed(2)}%
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground">Risk:Reward</p>
-                  <p className="text-lg font-bold text-amber-500">
+                  <p className="text-base sm:text-lg font-bold text-amber-500">
                     1:{calculatedRR}
                   </p>
                 </div>
@@ -429,7 +429,7 @@ export function AddTradeForm() {
                       type="button"
                       variant={form.emotionalState === emotion ? "default" : "outline"}
                       size="sm"
-                      className={form.emotionalState === emotion ? "bg-emerald-500 hover:bg-emerald-600 text-white" : ""}
+                      className={`min-h-[44px] ${form.emotionalState === emotion ? "bg-emerald-500 hover:bg-emerald-600 text-white" : ""}`}
                       onClick={() => setForm(prev => ({ ...prev, emotionalState: emotion }))}
                     >
                       {emotion === "Calm" && "🧘 "}
@@ -446,11 +446,12 @@ export function AddTradeForm() {
                 <Label>Mistakes Checklist</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {MISTAKE_OPTIONS.map(mistake => (
-                    <div key={mistake} className="flex items-center space-x-2">
+                    <div key={mistake} className="flex items-center space-x-2 min-h-[44px]">
                       <Checkbox
                         id={mistake}
                         checked={form.mistakes.includes(mistake)}
                         onCheckedChange={() => toggleMistake(mistake)}
+                        className="h-5 w-5"
                       />
                       <label htmlFor={mistake} className="text-sm cursor-pointer">{mistake}</label>
                     </div>

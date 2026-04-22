@@ -58,7 +58,7 @@ export function AIAnalyzer() {
   const trades = tradesData?.trades || []
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h3 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Brain className="h-7 w-7 text-emerald-500" />
@@ -68,11 +68,13 @@ export function AIAnalyzer() {
       </div>
 
       <Tabs defaultValue="trade-review" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
-          <TabsTrigger value="trade-review" className="text-xs sm:text-sm">Trade Review</TabsTrigger>
-          <TabsTrigger value="weekly-report" className="text-xs sm:text-sm">Weekly Report</TabsTrigger>
-          <TabsTrigger value="strategy-feedback" className="text-xs sm:text-sm">Strategy Feedback</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg min-w-[280px] h-11">
+            <TabsTrigger value="trade-review" className="text-xs sm:text-sm">Trade Review</TabsTrigger>
+            <TabsTrigger value="weekly-report" className="text-xs sm:text-sm">Weekly Report</TabsTrigger>
+            <TabsTrigger value="strategy-feedback" className="text-xs sm:text-sm">Strategy Feedback</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Trade Review AI */}
         <TabsContent value="trade-review" className="space-y-4">
@@ -85,10 +87,10 @@ export function AIAnalyzer() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3 items-end">
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-[200px] w-full sm:w-auto">
                   <p className="text-sm text-muted-foreground mb-2">Select a trade to analyze (or leave empty to analyze recent trades)</p>
                   <Select value={selectedTrade} onValueChange={setSelectedTrade}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a trade..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -115,7 +117,7 @@ export function AIAnalyzer() {
               </div>
 
               {analyzeMutation.data?.analysis && (
-                <div className="prose prose-sm dark:prose-invert max-w-none mt-4 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="prose prose-sm dark:prose-invert max-w-none mt-4 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border">
                   <ReactMarkdown>{analyzeMutation.data.analysis}</ReactMarkdown>
                 </div>
               )}
@@ -136,10 +138,11 @@ export function AIAnalyzer() {
               <div className="flex flex-wrap gap-3 items-end">
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Generate an AI-powered weekly report</p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px]"
                       onClick={() => weeklyMutation.mutate(7)}
                       disabled={weeklyMutation.isPending}
                     >
@@ -148,6 +151,7 @@ export function AIAnalyzer() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px]"
                       onClick={() => weeklyMutation.mutate(14)}
                       disabled={weeklyMutation.isPending}
                     >
@@ -156,6 +160,7 @@ export function AIAnalyzer() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px]"
                       onClick={() => weeklyMutation.mutate(30)}
                       disabled={weeklyMutation.isPending}
                     >
@@ -173,7 +178,7 @@ export function AIAnalyzer() {
               )}
 
               {weeklyMutation.data?.report && (
-                <div className="prose prose-sm dark:prose-invert max-w-none mt-4 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="prose prose-sm dark:prose-invert max-w-none mt-4 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border">
                   <ReactMarkdown>{weeklyMutation.data.report}</ReactMarkdown>
                 </div>
               )}
@@ -207,7 +212,7 @@ export function AIAnalyzer() {
               </Button>
 
               {strategyMutation.data?.feedback && (
-                <div className="prose prose-sm dark:prose-invert max-w-none mt-4 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="prose prose-sm dark:prose-invert max-w-none mt-4 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border">
                   <ReactMarkdown>{strategyMutation.data.feedback}</ReactMarkdown>
                 </div>
               )}

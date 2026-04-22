@@ -75,7 +75,7 @@ export function Backtesting() {
     : []
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h3 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Play className="h-7 w-7 text-emerald-500" />
@@ -91,7 +91,7 @@ export function Backtesting() {
             <CardTitle className="text-sm font-medium">Strategy Configuration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Test Name</Label>
                 <Input
@@ -163,7 +163,7 @@ export function Backtesting() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Stop Loss (%)</Label>
                 <Input
@@ -327,7 +327,7 @@ export function Backtesting() {
               {backtests.map((bt: Record<string, unknown>) => (
                 <div
                   key={bt.id as string}
-                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors gap-2 ${
                     selectedBacktest?.id === bt.id ? "border-emerald-500 bg-emerald-500/5" : "border-border"
                   }`}
                   onClick={() => setSelectedBacktest(bt)}
