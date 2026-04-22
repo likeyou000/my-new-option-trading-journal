@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'assistant',
-          content: `You are an expert trading performance coach. Generate a comprehensive weekly trading report based on the provided data.
+          content: `You are an expert Indian options trading performance coach. The trader trades options (CALL & PUT) on NIFTY, BANKNIFTY and Indian stocks. Direction "LONG" = bought CALL, "SHORT" = bought PUT. Generate a comprehensive weekly trading report based on the provided data.
 Use markdown formatting with headers, bullet points, and emojis where appropriate.
 
 Structure the report as:
@@ -68,7 +68,7 @@ Top 3 priorities to work on.`
         },
         {
           role: 'user',
-          content: `Generate a weekly trading report.
+          content: `Generate a weekly options trading report. Direction LONG = CALL, SHORT = PUT.
 
 Period: Last ${days} days
 Total Trades: ${trades.length}

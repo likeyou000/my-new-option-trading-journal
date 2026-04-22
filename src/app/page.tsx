@@ -36,7 +36,7 @@ function EmptyState({ onStart }: { onStart: () => void }) {
       <div className="text-center space-y-2">
         <h3 className="text-xl sm:text-2xl font-bold">Welcome to TradeDiary AI</h3>
         <p className="text-muted-foreground max-w-md text-sm">
-          Start logging your trades to track performance, analyze patterns, and get AI-powered insights.
+          Start logging your option trades — CALL & PUT — to track performance, analyze patterns, and get AI-powered insights.
         </p>
       </div>
       <Button
@@ -118,7 +118,7 @@ export default function HomePage() {
           {renderView()}
         </main>
         <footer className="border-t border-border py-2 sm:py-3 px-4 text-center text-[10px] sm:text-xs text-muted-foreground mt-auto">
-          TradeDiary AI — Smart Trading Journal · Powered by AI
+          TradeDiary AI — Options Trading Journal · Powered by AI
         </footer>
       </div>
     </div>

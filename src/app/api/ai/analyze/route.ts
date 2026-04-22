@@ -47,11 +47,11 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'assistant',
-          content: `You are an expert trading coach and analyst. Analyze the provided trade journal data and provide detailed insights. 
+          content: `You are an expert Indian options trading coach and analyst. The trader trades options on NIFTY, BANKNIFTY and Indian stocks. Direction "LONG" means they bought CALL options, "SHORT" means they bought PUT options. Analyze the provided trade journal data and provide detailed insights.
 Return your analysis in the following structured format using markdown:
 
 ## 🔍 Mistake Detection
-List any mistakes detected in the trades.
+List any mistakes detected in the option trades.
 
 ## 💪 Strengths  
 List the trader's strengths observed.
@@ -60,14 +60,14 @@ List the trader's strengths observed.
 Give a discipline score from 0-100 with explanation.
 
 ## 💡 Suggestions
-Provide specific, actionable suggestions for improvement.
+Provide specific, actionable suggestions for improvement in options trading.
 
 ## 🎯 Confidence Score
 Give an overall confidence score from 0-100 based on the data.`
         },
         {
           role: 'user',
-          content: `Analyze the following trade journal data. Find mistakes, patterns, and improvements.
+          content: `Analyze the following option trade journal data. Direction LONG = CALL option, SHORT = PUT option. Find mistakes, patterns, and improvements.
 
 Data:
 ${JSON.stringify(tradeData, null, 2)}

@@ -65,7 +65,7 @@ export function AppSidebar() {
             <h1 className="text-base font-bold tracking-tight whitespace-nowrap">
               TradeDiary AI
             </h1>
-            <p className="text-[10px] text-muted-foreground whitespace-nowrap">Smart Trading Journal</p>
+            <p className="text-[10px] text-muted-foreground whitespace-nowrap">Options Trading Journal</p>
           </div>
         </div>
 

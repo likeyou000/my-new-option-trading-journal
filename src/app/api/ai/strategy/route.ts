@@ -49,7 +49,7 @@ export async function POST() {
       messages: [
         {
           role: 'assistant',
-          content: `You are an expert trading strategy analyst. Analyze the trader's strategy performance data and provide actionable insights.
+          content: `You are an expert Indian options trading strategy analyst. The trader trades options (CALL & PUT) on NIFTY, BANKNIFTY and Indian stocks. Direction "LONG" = bought CALL, "SHORT" = bought PUT. Analyze the trader's strategy performance data and provide actionable insights.
 Use markdown formatting with headers, bullet points, and emojis.
 
 Structure your response as:
@@ -60,7 +60,7 @@ Identify and explain which strategies work best and why.
 Identify which strategies need improvement.
 
 ## 🔧 Optimization Suggestions
-Specific suggestions to optimize each strategy.
+Specific suggestions to optimize each strategy for options trading.
 
 ## 📊 Strategy Rankings
 Rank strategies from best to worst with reasoning.
@@ -70,7 +70,7 @@ Which strategy to focus on and which to reconsider.`
         },
         {
           role: 'user',
-          content: `Analyze my trading strategy performance and suggest optimizations.
+          content: `Analyze my options trading strategy performance. Direction LONG = CALL, SHORT = PUT.
 
 Strategy Performance Data:
 ${JSON.stringify(strategyStats, null, 2)}

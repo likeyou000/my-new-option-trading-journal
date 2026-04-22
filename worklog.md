@@ -219,3 +219,30 @@ Stage Summary:
 - App now starts with clean empty state prompting user to "Log Your First Trade"
 - Database is completely empty and ready for real trade data
 - App is publish-ready
+
+---
+Task ID: 13
+Agent: Main Agent
+Task: Remove dummy data, update for options trading (CALL/PUT)
+
+Work Log:
+- Verified database is 100% clean: 0 trades, 0 users, 0 psychology, 0 backtests
+- Updated Add Trade form: "Direction" → "Option Type", LONG → CALL, SHORT → PUT
+- Added option-specific strategies: Straddle, Strangle, Iron Condor
+- Symbol placeholder: "e.g., NIFTY" → "e.g., NIFTY 24000 CE"
+- Quantity label → "Lots", placeholder → "Lot size (e.g., 1)"
+- Notes label → "Option Details / Notes", placeholder → "Strike price, Expiry date, Premium, Setup reason..."
+- Updated Trade History: Direction column → "Type", shows CALL/PUT instead of LONG/SHORT
+- Updated trade detail dialog: "Direction" → "Type" with CALL/PUT, "Quantity" → "Lots"
+- Updated all 3 AI prompts (analyze, weekly, strategy) to specify Indian options trading context
+- AI now knows: LONG = bought CALL, SHORT = bought PUT, NIFTY/BANKNIFTY focus
+- Updated sidebar subtitle: "Smart Trading Journal" → "Options Trading Journal"
+- Updated footer: "Smart Trading Journal" → "Options Trading Journal"
+- Updated welcome empty state: mentions "CALL & PUT" option trades
+- Lint clean, no errors
+
+Stage Summary:
+- Database is completely clean - ready for real option trade data
+- Full options trading terminology: CALL (buy call) and PUT (buy put)
+- AI context updated for Indian options trading
+- App is ready for publishing with real data input

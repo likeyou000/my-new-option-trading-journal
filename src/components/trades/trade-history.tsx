@@ -149,7 +149,7 @@ export function TradeHistory() {
                     <div className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
                   <TableHead>Symbol</TableHead>
-                  <TableHead className="hidden md:table-cell">Direction</TableHead>
+                  <TableHead className="hidden md:table-cell">Type</TableHead>
                   <TableHead className="cursor-pointer hidden md:table-cell" onClick={() => toggleSort("entryPrice")}>
                     <div className="flex items-center gap-1">Entry <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
@@ -197,7 +197,7 @@ export function TradeHistory() {
                             }
                           >
                             {trade.direction === "LONG" ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                            {trade.direction as string}
+                            {trade.direction === "LONG" ? "CALL" : "PUT"}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-xs hidden md:table-cell">₹{(trade.entryPrice as number).toFixed(2)}</TableCell>
@@ -274,11 +274,11 @@ export function TradeHistory() {
           {selectedTrade && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Direction:</span> <span className="font-medium ml-1">{selectedTrade.direction as string}</span></div>
+                <div><span className="text-muted-foreground">Type:</span> <span className={`font-medium ml-1 ${(selectedTrade.direction as string) === "LONG" ? "text-emerald-500" : "text-red-500"}`}>{(selectedTrade.direction as string) === "LONG" ? "CALL" : "PUT"}</span></div>
                 <div><span className="text-muted-foreground">Outcome:</span> <span className="font-medium ml-1">{selectedTrade.outcome as string}</span></div>
                 <div><span className="text-muted-foreground">Entry:</span> <span className="font-mono ml-1">₹{(selectedTrade.entryPrice as number).toFixed(2)}</span></div>
                 <div><span className="text-muted-foreground">Exit:</span> <span className="font-mono ml-1">{selectedTrade.exitPrice ? `₹${(selectedTrade.exitPrice as number).toFixed(2)}` : "-"}</span></div>
-                <div><span className="text-muted-foreground">Quantity:</span> <span className="font-mono ml-1">{selectedTrade.quantity as number}</span></div>
+                <div><span className="text-muted-foreground">Lots:</span> <span className="font-mono ml-1">{selectedTrade.quantity as number}</span></div>
                 <div><span className="text-muted-foreground">Strategy:</span> <span className="font-medium ml-1">{(selectedTrade.strategy as string) || "-"}</span></div>
                 <div><span className="text-muted-foreground">Stop Loss:</span> <span className="font-mono ml-1">{selectedTrade.stopLoss ? `₹${(selectedTrade.stopLoss as number).toFixed(2)}` : "-"}</span></div>
                 <div><span className="text-muted-foreground">Target:</span> <span className="font-mono ml-1">{selectedTrade.target ? `₹${(selectedTrade.target as number).toFixed(2)}` : "-"}</span></div>

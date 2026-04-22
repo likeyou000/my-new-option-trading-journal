@@ -16,7 +16,7 @@ import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
 import { Save, RotateCcw, TrendingUp, TrendingDown, Calculator } from "lucide-react"
 
-const STRATEGIES = ["Breakout", "Scalping", "Mean Reversion", "Momentum", "Trend Following", "VWAP", "Other"]
+const STRATEGIES = ["Breakout", "Scalping", "Mean Reversion", "Momentum", "Trend Following", "VWAP", "Straddle", "Strangle", "Iron Condor", "Other"]
 const EMOTIONS = ["Calm", "FOMO", "Fear", "Overconfidence"]
 const MISTAKE_OPTIONS = ["Overtrading", "No SL", "Early Exit", "Late Exit"]
 
@@ -206,7 +206,7 @@ export function AddTradeForm() {
                   <Label htmlFor="symbol">Symbol *</Label>
                   <Input
                     id="symbol"
-                    placeholder="e.g., NIFTY"
+                    placeholder="e.g., NIFTY 24000 CE"
                     value={form.symbol}
                     onChange={(e) => setForm(prev => ({ ...prev, symbol: e.target.value.toUpperCase() }))}
                   />
@@ -223,7 +223,7 @@ export function AddTradeForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Direction *</Label>
+                  <Label>Option Type *</Label>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -231,7 +231,7 @@ export function AddTradeForm() {
                       className={form.direction === "LONG" ? "bg-emerald-500 hover:bg-emerald-600 text-white flex-1" : "flex-1"}
                       onClick={() => setForm(prev => ({ ...prev, direction: "LONG" }))}
                     >
-                      <TrendingUp className="h-4 w-4 mr-1" /> Long
+                      <TrendingUp className="h-4 w-4 mr-1" /> CALL
                     </Button>
                     <Button
                       type="button"
@@ -239,7 +239,7 @@ export function AddTradeForm() {
                       className={form.direction === "SHORT" ? "bg-red-500 hover:bg-red-600 text-white flex-1" : "flex-1"}
                       onClick={() => setForm(prev => ({ ...prev, direction: "SHORT" }))}
                     >
-                      <TrendingDown className="h-4 w-4 mr-1" /> Short
+                      <TrendingDown className="h-4 w-4 mr-1" /> PUT
                     </Button>
                   </div>
                 </div>
@@ -269,11 +269,11 @@ export function AddTradeForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity *</Label>
+                  <Label htmlFor="quantity">Lots *</Label>
                   <Input
                     id="quantity"
                     type="number"
-                    placeholder="0"
+                    placeholder="Lot size (e.g., 1)"
                     value={form.quantity}
                     onChange={(e) => setForm(prev => ({ ...prev, quantity: e.target.value }))}
                   />
@@ -334,10 +334,10 @@ export function AddTradeForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Trade Analysis / Notes</Label>
+                <Label htmlFor="notes">Option Details / Notes</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Describe your trade rationale, analysis, etc."
+                  placeholder="Strike price, Expiry date, Premium, Setup reason..."
                   value={form.notes}
                   onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
