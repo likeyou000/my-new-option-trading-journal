@@ -16,12 +16,12 @@ import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
 import {
   Save, RotateCcw, TrendingUp, TrendingDown, Calculator,
-  ArrowUpCircle, ArrowDownCircle, Info
+  ArrowUpCircle, ArrowDownCircle, Info, AlertCircle
 } from "lucide-react"
 import {
   SYMBOLS, OPTION_TYPES, TRADE_TYPES, STRATEGIES, EMOTIONS, MISTAKE_OPTIONS,
   LOT_SIZES, calculateQuantity, calculatePnl, calculatePnlPercent,
-  calculateCharges, calculateRR, generateTradeName, detectOutcome
+  calculateCharges, calculateChargesBreakdown, calculateRR, generateTradeName, generateFullTradeName, detectOutcome
 } from "@/lib/options"
 
 interface TradeForm {
@@ -35,6 +35,7 @@ interface TradeForm {
   exitPrice: string
   stopLoss: string
   target: string
+  trailingSL: string
   strategy: string
   outcome: string
   notes: string
@@ -58,6 +59,7 @@ const defaultForm: TradeForm = {
   exitPrice: "",
   stopLoss: "",
   target: "",
+  trailingSL: "",
   strategy: "",
   outcome: "PENDING",
   notes: "",
@@ -103,6 +105,7 @@ export function AddTradeForm() {
       exitPrice: t.exitPrice?.toString() || "",
       stopLoss: t.stopLoss?.toString() || "",
       target: t.target?.toString() || "",
+      trailingSL: "",
       strategy: t.strategy || "",
       outcome: t.outcome || "PENDING",
       notes: t.notes || "",
@@ -137,10 +140,15 @@ export function AddTradeForm() {
     return calculatePnlPercent(form.tradeType, entryPrice, exitPrice, quantity)
   }, [form.tradeType, entryPrice, exitPrice, quantity])
 
+  const chargesBreakdown = useMemo(() => {
+    if (!exitPrice || !entryPrice || !quantity) return null
+    return calculateChargesBreakdown(form.tradeType, entryPrice, exitPrice, quantity)
+  }, [form.tradeType, entryPrice, exitPrice, quantity])
+
   const calculatedBrokerage = useMemo(() => {
-    if (!exitPrice || !entryPrice || !quantity) return 0
-    return calculateCharges(form.tradeType, entryPrice, exitPrice, quantity, calculatedPnl)
-  }, [form.tradeType, entryPrice, exitPrice, quantity, calculatedPnl])
+    if (!chargesBreakdown) return 0
+    return chargesBreakdown.total
+  }, [chargesBreakdown])
 
   const calculatedNetPnl = useMemo(() => {
     if (!exitPrice || !entryPrice) return 0
@@ -151,6 +159,18 @@ export function AddTradeForm() {
     if (!stopLoss || !target || !entryPrice) return 0
     return calculateRR(entryPrice, stopLoss, target)
   }, [entryPrice, stopLoss, target])
+
+  // Risk in rupees
+  const riskAmount = useMemo(() => {
+    if (!stopLoss || !entryPrice || !quantity) return 0
+    return Math.abs(entryPrice - stopLoss) * quantity
+  }, [entryPrice, stopLoss, quantity])
+
+  // Reward in rupees
+  const rewardAmount = useMemo(() => {
+    if (!target || !entryPrice || !quantity) return 0
+    return Math.abs(target - entryPrice) * quantity
+  }, [entryPrice, target, quantity])
 
   const autoOutcome = useMemo(() => {
     if (!exitPrice || !entryPrice) return "PENDING"
@@ -233,8 +253,17 @@ export function AddTradeForm() {
         <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 border border-border">
           <Info className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-sm font-medium">{tradeName}</span>
+          <Badge
+            variant="outline"
+            className={form.tradeType === "BUY"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-amber-500 text-amber-500"
+            }
+          >
+            {form.tradeType}
+          </Badge>
           <span className="text-xs text-muted-foreground ml-1">
-            • Lot Size: {lotSize} • Qty: {quantity}
+            • Lot: {lotSize} • Qty: {quantity}
           </span>
         </div>
       )}
@@ -304,6 +333,9 @@ export function AddTradeForm() {
                       <TrendingDown className="h-4 w-4 mr-1" /> PE
                     </Button>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {form.optionType === "CE" ? "Bullish — profit when underlying goes UP" : "Bearish — profit when underlying goes DOWN"}
+                  </p>
                 </div>
 
                 {/* Expiry Date */}
@@ -338,6 +370,9 @@ export function AddTradeForm() {
                       <ArrowDownCircle className="h-4 w-4 mr-1" /> SELL
                     </Button>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {form.tradeType === "BUY" ? "Option Buying — limited risk, unlimited reward" : "Option Writing — unlimited risk, premium income"}
+                  </p>
                 </div>
 
                 {/* Lots */}
@@ -390,6 +425,11 @@ export function AddTradeForm() {
                     value={form.exitPrice}
                     onChange={(e) => setForm(prev => ({ ...prev, exitPrice: e.target.value }))}
                   />
+                  {!form.exitPrice && (
+                    <p className="text-[10px] text-amber-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Open position
+                    </p>
+                  )}
                 </div>
 
                 {/* Trade Date */}
@@ -414,6 +454,11 @@ export function AddTradeForm() {
                     value={form.stopLoss}
                     onChange={(e) => setForm(prev => ({ ...prev, stopLoss: e.target.value }))}
                   />
+                  {stopLoss && entryPrice && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Risk: ₹{riskAmount.toLocaleString('en-IN')} ({((Math.abs(entryPrice - stopLoss) / entryPrice) * 100).toFixed(1)}% of premium)
+                    </p>
+                  )}
                 </div>
 
                 {/* Target */}
@@ -427,10 +472,28 @@ export function AddTradeForm() {
                     value={form.target}
                     onChange={(e) => setForm(prev => ({ ...prev, target: e.target.value }))}
                   />
+                  {target && entryPrice && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Reward: ₹{rewardAmount.toLocaleString('en-IN')} ({((Math.abs(target - entryPrice) / entryPrice) * 100).toFixed(1)}% of premium)
+                    </p>
+                  )}
+                </div>
+
+                {/* Trailing SL */}
+                <div className="space-y-2">
+                  <Label htmlFor="trailingSL">Trailing SL (Premium)</Label>
+                  <Input
+                    id="trailingSL"
+                    type="number"
+                    step="0.05"
+                    placeholder="₹0.00 (optional)"
+                    value={form.trailingSL}
+                    onChange={(e) => setForm(prev => ({ ...prev, trailingSL: e.target.value }))}
+                  />
                 </div>
 
                 {/* Strategy */}
-                <div className="space-y-2">
+                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
                   <Label>Strategy</Label>
                   <Select value={form.strategy} onValueChange={(v) => setForm(prev => ({ ...prev, strategy: v }))}>
                     <SelectTrigger>
@@ -450,7 +513,7 @@ export function AddTradeForm() {
                 <Label htmlFor="notes">Notes / Setup Reason</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Why did you take this trade? What was the setup?"
+                  placeholder="Why did you take this trade? What was the setup? (e.g., Nifty broke below 22500 support with volume)"
                   value={form.notes}
                   onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
@@ -474,6 +537,7 @@ export function AddTradeForm() {
                   <p className="text-base sm:text-lg font-bold">
                     ₹{investment.toLocaleString('en-IN')}
                   </p>
+                  <p className="text-[10px] text-muted-foreground">{entryPrice} × {quantity}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground">Gross P&L</p>
@@ -502,10 +566,49 @@ export function AddTradeForm() {
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground">R:R</p>
                   <p className="text-base sm:text-lg font-bold text-amber-500">
-                    1:{calculatedRR.toFixed(1)}
+                    {calculatedRR > 0 ? `1:${calculatedRR.toFixed(1)}` : "-"}
                   </p>
+                  {riskAmount > 0 && rewardAmount > 0 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      R: ₹{riskAmount.toLocaleString('en-IN')} / Rd: ₹{rewardAmount.toLocaleString('en-IN')}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* Charges Breakdown */}
+              {chargesBreakdown && (
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground font-medium mb-2">Charges Breakdown</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Brokerage</p>
+                      <p className="text-xs font-medium">₹{chargesBreakdown.brokerage}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">STT</p>
+                      <p className="text-xs font-medium">₹{chargesBreakdown.stt}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Exchange</p>
+                      <p className="text-xs font-medium">₹{chargesBreakdown.exchangeTxnCharges}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">GST</p>
+                      <p className="text-xs font-medium">₹{chargesBreakdown.gst}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">SEBI</p>
+                      <p className="text-xs font-medium">₹{chargesBreakdown.sebiCharges}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Stamp</p>
+                      <p className="text-xs font-medium">₹{chargesBreakdown.stampDuty}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {exitPrice && entryPrice && (
                 <div className="mt-3 flex items-center justify-center">
                   <Badge
@@ -569,7 +672,7 @@ export function AddTradeForm() {
 
               <div className="space-y-2">
                 <Label>Emotional State</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {EMOTIONS.map(emotion => (
                     <Button
                       key={emotion}
@@ -583,6 +686,8 @@ export function AddTradeForm() {
                       {emotion === "FOMO" && "😰 "}
                       {emotion === "Fear" && "😨 "}
                       {emotion === "Overconfidence" && "😎 "}
+                      {emotion === "Greedy" && "🤑 "}
+                      {emotion === "Revenge" && "😡 "}
                       {emotion}
                     </Button>
                   ))}

@@ -30,7 +30,7 @@ import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
 import { Edit, Trash2, Eye, Search, TrendingUp, TrendingDown, ArrowUpDown } from "lucide-react"
 import { useState } from "react"
-import { LOT_SIZES } from "@/lib/options"
+import { LOT_SIZES, calculateChargesBreakdown } from "@/lib/options"
 
 export function TradeHistory() {
   const { setEditingTradeId, setCurrentView } = useAppStore()
@@ -106,6 +106,16 @@ export function TradeHistory() {
     return `${sym} ${strike} ${ot} (${d.getDate()} ${monthShort})`
   }
 
+  // Calculate charges breakdown for selected trade
+  const selectedCharges = selectedTrade ? (() => {
+    const ep = selectedTrade.entryPrice as number
+    const xp = selectedTrade.exitPrice as number
+    const qty = selectedTrade.quantity as number
+    const tt = selectedTrade.tradeType as string
+    if (!xp || !ep || !qty) return null
+    return calculateChargesBreakdown(tt, ep, xp, qty)
+  })() : null
+
   return (
     <div className="space-y-4">
       <div>
@@ -173,7 +183,7 @@ export function TradeHistory() {
                   <TableHead className="cursor-pointer" onClick={() => toggleSort("date")}>
                     <div className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
-                  <TableHead>Trade Name</TableHead>
+                  <TableHead>Contract</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
                   <TableHead className="hidden md:table-cell">Side</TableHead>
                   <TableHead className="cursor-pointer hidden md:table-cell" onClick={() => toggleSort("entryPrice")}>
@@ -182,7 +192,7 @@ export function TradeHistory() {
                   <TableHead className="hidden lg:table-cell">Exit</TableHead>
                   <TableHead className="hidden sm:table-cell">Lots</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => toggleSort("pnl")}>
-                    <div className="flex items-center gap-1">P&L <ArrowUpDown className="h-3 w-3" /></div>
+                    <div className="flex items-center gap-1">Gross P&L <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">Net P&L</TableHead>
                   <TableHead className="hidden sm:table-cell">Outcome</TableHead>
@@ -201,7 +211,7 @@ export function TradeHistory() {
                 ) : sortedTrades.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
-                      No trades found
+                      No trades found. Log your first trade to get started!
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -307,8 +317,19 @@ export function TradeHistory() {
       <Dialog open={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
               {selectedTrade && getTradeName(selectedTrade)}
+              {selectedTrade && (
+                <Badge
+                  variant="outline"
+                  className={(selectedTrade.tradeType as string) === "BUY"
+                    ? "border-emerald-500 text-emerald-500"
+                    : "border-amber-500 text-amber-500"
+                  }
+                >
+                  {selectedTrade.tradeType as string}
+                </Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
           {selectedTrade && (
@@ -321,22 +342,77 @@ export function TradeHistory() {
                 <div><span className="text-muted-foreground">Side:</span> <Badge variant="outline" className="ml-1">{selectedTrade.tradeType as string}</Badge></div>
                 <div><span className="text-muted-foreground">Lots:</span> <span className="font-mono ml-1">{selectedTrade.lots as number} ({selectedTrade.quantity as number} qty)</span></div>
                 <div><span className="text-muted-foreground">Entry:</span> <span className="font-mono ml-1">₹{(selectedTrade.entryPrice as number).toFixed(2)}</span></div>
-                <div><span className="text-muted-foreground">Exit:</span> <span className="font-mono ml-1">{selectedTrade.exitPrice ? `₹${(selectedTrade.exitPrice as number).toFixed(2)}` : "-"}</span></div>
+                <div><span className="text-muted-foreground">Exit:</span> <span className="font-mono ml-1">{selectedTrade.exitPrice ? `₹${(selectedTrade.exitPrice as number).toFixed(2)}` : "Open"}</span></div>
                 <div><span className="text-muted-foreground">Stop Loss:</span> <span className="font-mono ml-1">{selectedTrade.stopLoss ? `₹${(selectedTrade.stopLoss as number).toFixed(2)}` : "-"}</span></div>
                 <div><span className="text-muted-foreground">Target:</span> <span className="font-mono ml-1">{selectedTrade.target ? `₹${(selectedTrade.target as number).toFixed(2)}` : "-"}</span></div>
-                <div><span className="text-muted-foreground">Gross P&L:</span> <span className={`font-mono ml-1 ${(selectedTrade.pnl as number) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{(selectedTrade.pnl as number).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-                <div><span className="text-muted-foreground">Brokerage:</span> <span className="font-mono ml-1 text-amber-500">₹{(selectedTrade.brokerage as number || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-                <div><span className="text-muted-foreground">Net P&L:</span> <span className={`font-mono ml-1 font-bold ${((selectedTrade.netPnl as number) ?? (selectedTrade.pnl as number)) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{((selectedTrade.netPnl as number) ?? (selectedTrade.pnl as number)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-                <div><span className="text-muted-foreground">R:R:</span> <span className="font-mono ml-1">{(selectedTrade.rrRatio as number)?.toFixed(2) || "-"}</span></div>
-                <div><span className="text-muted-foreground">Outcome:</span> <Badge className="ml-1" variant={
-                  (selectedTrade.outcome as string) === "WIN" ? "default" :
-                  (selectedTrade.outcome as string) === "LOSS" ? "destructive" : "secondary"
-                }>{selectedTrade.outcome as string}</Badge></div>
-                <div><span className="text-muted-foreground">Strategy:</span> <span className="font-medium ml-1">{(selectedTrade.strategy as string) || "-"}</span></div>
+              </div>
+
+              {/* P&L Section */}
+              <div className="border-t pt-3">
+                <p className="font-medium text-sm mb-2">P&L Summary</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Investment:</span> <span className="font-mono ml-1">₹{((selectedTrade.entryPrice as number) * (selectedTrade.quantity as number)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                  <div><span className="text-muted-foreground">Gross P&L:</span> <span className={`font-mono ml-1 ${(selectedTrade.pnl as number) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{(selectedTrade.pnl as number).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                  <div><span className="text-muted-foreground">P&L %:</span> <span className={`font-mono ml-1 ${(selectedTrade.pnlPercent as number) >= 0 ? "text-emerald-500" : "text-red-500"}`}>{(selectedTrade.pnlPercent as number).toFixed(2)}%</span></div>
+                  <div><span className="text-muted-foreground">R:R:</span> <span className="font-mono ml-1">{(selectedTrade.rrRatio as number)?.toFixed(2) || "-"}</span></div>
+                </div>
+              </div>
+
+              {/* Charges Breakdown */}
+              <div className="border-t pt-3">
+                <p className="font-medium text-sm mb-2">Charges Breakdown</p>
+                {selectedCharges ? (
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between p-2 rounded bg-muted/50">
+                      <span className="text-muted-foreground">Brokerage</span>
+                      <span className="font-mono">₹{selectedCharges.brokerage}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-muted/50">
+                      <span className="text-muted-foreground">STT</span>
+                      <span className="font-mono">₹{selectedCharges.stt}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-muted/50">
+                      <span className="text-muted-foreground">Exchange Txn</span>
+                      <span className="font-mono">₹{selectedCharges.exchangeTxnCharges}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-muted/50">
+                      <span className="text-muted-foreground">GST (18%)</span>
+                      <span className="font-mono">₹{selectedCharges.gst}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-muted/50">
+                      <span className="text-muted-foreground">SEBI</span>
+                      <span className="font-mono">₹{selectedCharges.sebiCharges}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-muted/50">
+                      <span className="text-muted-foreground">Stamp Duty</span>
+                      <span className="font-mono">₹{selectedCharges.stampDuty}</span>
+                    </div>
+                    <div className="col-span-2 flex justify-between p-2 rounded bg-amber-500/10 border border-amber-500/20">
+                      <span className="font-medium text-amber-600">Total Charges</span>
+                      <span className="font-mono font-medium text-amber-600">₹{selectedCharges.total}</span>
+                    </div>
+                    <div className="col-span-2 flex justify-between p-2 rounded bg-muted/80 border border-border">
+                      <span className="font-bold">Net P&L</span>
+                      <span className={`font-mono font-bold ${((selectedTrade.netPnl as number) ?? (selectedTrade.pnl as number)) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{((selectedTrade.netPnl as number) ?? (selectedTrade.pnl as number)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Charges calculated when exit price is provided</p>
+                )}
+              </div>
+
+              <div className="border-t pt-3">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Outcome:</span> <Badge className="ml-1" variant={
+                    (selectedTrade.outcome as string) === "WIN" ? "default" :
+                    (selectedTrade.outcome as string) === "LOSS" ? "destructive" : "secondary"
+                  }>{selectedTrade.outcome as string}</Badge></div>
+                  <div><span className="text-muted-foreground">Strategy:</span> <span className="font-medium ml-1">{(selectedTrade.strategy as string) || "-"}</span></div>
+                </div>
               </div>
 
               {selectedTrade.notes && (
-                <div>
+                <div className="border-t pt-3">
                   <p className="text-muted-foreground text-sm">Notes:</p>
                   <p className="text-sm mt-1">{selectedTrade.notes as string}</p>
                 </div>

@@ -246,3 +246,34 @@ Stage Summary:
 - Full options trading terminology: CALL (buy call) and PUT (buy put)
 - AI context updated for Indian options trading
 - App is ready for publishing with real data input
+---
+Task ID: 14
+Agent: Main Agent
+Task: Full options trading restructure with detailed spec implementation
+
+Work Log:
+- Verified all existing files already support options trading (CE/PE, strike, lot size, premium, etc.)
+- Reset database: deleted custom.db, ran db:push to create fresh empty DB (0 trades, 0 users)
+- Enhanced lib/options.ts: Added MIDCAPNIFTY (lot: 75) and SENSEX (lot: 20) symbols
+- Added more option-specific strategies: Directional - PE Buying, Directional - CE Buying, Support/Resistance, News Based, Hedging
+- Added more emotions: Greedy, Revenge
+- Added more mistake options: SL Hit & Reversed, Ignored Setup Rules, Chased the Move, Held Too Long
+- Created calculateChargesBreakdown() function with detailed breakdown: Brokerage, STT, Exchange Txn, GST, SEBI, Stamp Duty
+- Created generateFullTradeName() with BUY/SELL indicator
+- Created getInvestment() helper function
+- Enhanced Add Trade form: Trailing SL field, charges breakdown in live calculations, risk/reward amounts in rupees, open position indicator, option type descriptions (CE=profit when UP, PE=profit when DOWN), trade type descriptions (BUY=limited risk, SELL=unlimited risk), investment breakdown formula
+- Enhanced Trade History: Full charges breakdown in trade detail dialog (Brokerage, STT, Exchange Txn, GST, SEBI, Stamp Duty), BUY/SELL badge in dialog title, investment amount display
+- Enhanced Dashboard: Open positions card showing trades without exit price, click-to-edit open positions
+- Lint clean, no runtime errors
+
+Stage Summary:
+- Database completely clean - no dummy data
+- Full options trading support: CE/PE, strike price, expiry, lot size, premium, BUY/SELL
+- 5 symbols: NIFTY (50), BANKNIFTY (15), FINNIFTY (40), MIDCAPNIFTY (75), SENSEX (20)
+- Detailed charges breakdown: Brokerage + STT + Exchange + GST + SEBI + Stamp Duty
+- Open positions tracking on dashboard
+- Enhanced psychology: 6 emotions, 10 mistake options
+- Enhanced strategies: 15 option-specific strategies
+- Trailing SL field added
+- Risk/reward shown in rupees and percentages
+- App is fully options-trading ready
