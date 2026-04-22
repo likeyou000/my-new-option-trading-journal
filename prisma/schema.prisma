@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  trades    Trade[]
+}
+
+model Trade {
+  id          String   @id @default(cuid())
+  userId      String
+  symbol      String
+  date        DateTime
+  entryPrice  Float
+  exitPrice   Float?
+  quantity    Int
+  direction   String   @default("LONG")
+  stopLoss    Float?
+  target      Float?
+  strategy    String?
+  outcome     String   @default("PENDING")
+  notes       String?
+  pnl         Float?
+  pnlPercent  Float?
+  rrRatio     Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  psychology  Psychology?
+
+  @@index([userId])
+  @@index([date])
+  @@index([symbol])
+  @@index([strategy])
+}
+
+model Psychology {
+  id            String   @id @default(cuid())
+  tradeId       String   @unique
+  confidence    Int      @default(5)
+  satisfaction  Int      @default(5)
+  emotionalState String  @default("Calm")
+  mistakes      String?
+  lessonsLearned String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  trade         Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+}
+
+model BacktestResult {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  symbol          String
+  startDate       DateTime
+  endDate         DateTime
+  strategy        String
+  entryCondition  String
+  exitCondition   String
+  stopLoss        Float?
+  takeProfit      Float?
+  initialCapital  Float    @default(100000)
+  finalCapital    Float?
+  totalTrades     Int      @default(0)
+  winRate         Float?
+  maxDrawdown     Float?
+  profitFactor    Float?
+  equityCurve     String?
+  tradeList       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
