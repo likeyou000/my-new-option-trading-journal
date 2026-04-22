@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +34,19 @@ export function Backtesting() {
     initialCapital: "100000",
   })
 
+  const queryClient = useQueryClient()
+
+  const { data: backtestsData, isLoading } = useQuery({
+    queryKey: ["backtests"],
+    queryFn: async () => {
+      const res = await fetch("/api/backtest")
+      if (!res.ok) throw new Error("Failed to fetch backtests")
+      return res.json()
+    },
+  })
+
+  const [selectedBacktest, setSelectedBacktest] = useState<Record<string, unknown> | null>(null)
+
   const runMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/backtest", {
@@ -50,19 +63,6 @@ export function Backtesting() {
     },
     onError: () => toast.error("Failed to run backtest"),
   })
-
-  const queryClient = useQueryClient()
-
-  const { data: backtestsData, isLoading } = useQuery({
-    queryKey: ["backtests"],
-    queryFn: async () => {
-      const res = await fetch("/api/backtest")
-      if (!res.ok) throw new Error("Failed to fetch backtests")
-      return res.json()
-    },
-  })
-
-  const [selectedBacktest, setSelectedBacktest] = useState<Record<string, unknown> | null>(null)
 
   const backtests = backtestsData?.results || []
 

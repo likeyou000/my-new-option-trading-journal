@@ -12,9 +12,12 @@ import { Reports } from "@/components/reports/reports"
 import { AIAnalyzer } from "@/components/ai-analyzer/ai-analyzer"
 import { CalendarView } from "@/components/calendar/calendar-view"
 import { Backtesting } from "@/components/backtest/backtesting"
+import { LiveMarket } from "@/components/market/live-market"
 import { Button } from "@/components/ui/button"
 import { Database, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { useSyncExternalStore } from "react"
 
 function SeedPrompt({ onSeeded }: { onSeeded: () => void }) {
   const queryClient = useQueryClient()
@@ -34,13 +37,13 @@ function SeedPrompt({ onSeeded }: { onSeeded: () => void }) {
   })
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 px-4">
       <div className="h-20 w-20 rounded-2xl bg-emerald-500/15 flex items-center justify-center">
         <Database className="h-10 w-10 text-emerald-500" />
       </div>
       <div className="text-center space-y-2">
-        <h3 className="text-2xl font-bold">Welcome to TradeDiary AI</h3>
-        <p className="text-muted-foreground max-w-md">
+        <h3 className="text-xl sm:text-2xl font-bold">Welcome to TradeDiary AI</h3>
+        <p className="text-muted-foreground max-w-md text-sm">
           Start by loading demo data to explore the app, or add your first trade manually.
         </p>
       </div>
@@ -61,8 +64,19 @@ function SeedPrompt({ onSeeded }: { onSeeded: () => void }) {
   )
 }
 
+// Responsive hook - detect if mobile
+const emptySubscribe = () => () => {}
+function useIsMobile() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => typeof window !== 'undefined' && window.innerWidth < 1024,
+    () => false
+  )
+}
+
 export default function HomePage() {
   const { currentView, sidebarOpen } = useAppStore()
+  const isMobile = useIsMobile()
 
   const { data: statsData } = useQuery({
     queryKey: ["stats"],
@@ -92,6 +106,8 @@ export default function HomePage() {
         return <TradeHistory />
       case "reports":
         return <Reports />
+      case "live-market":
+        return <LiveMarket />
       case "ai-analyzer":
         return <AIAnalyzer />
       case "calendar":
@@ -108,12 +124,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex bg-background">
       <AppSidebar />
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-60" : "ml-16"}`}>
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-300",
+        // On mobile, always full width; on desktop, offset by sidebar
+        !isMobile && (sidebarOpen ? "ml-60" : "ml-16"),
+        isMobile && "ml-0"
+      )}>
         <AppHeader />
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto">
           {renderView()}
         </main>
-        <footer className="border-t border-border py-3 px-4 text-center text-xs text-muted-foreground">
+        <footer className="border-t border-border py-2 sm:py-3 px-4 text-center text-[10px] sm:text-xs text-muted-foreground">
           TradeDiary AI — Smart Trading Journal · Powered by AI
         </footer>
       </div>

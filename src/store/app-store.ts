@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type ViewType = 'dashboard' | 'add-trade' | 'history' | 'reports' | 'ai-analyzer' | 'calendar' | 'backtest'
+export type ViewType = 'dashboard' | 'add-trade' | 'history' | 'reports' | 'ai-analyzer' | 'calendar' | 'backtest' | 'live-market'
 
 interface AppState {
   currentView: ViewType
@@ -16,6 +16,6 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentView: (view) => set({ currentView: view, editingTradeId: view === 'add-trade' ? null : undefined }),
   editingTradeId: null,
   setEditingTradeId: (id) => set({ editingTradeId: id, currentView: 'add-trade' }),
-  sidebarOpen: true,
+  sidebarOpen: false,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
 }))

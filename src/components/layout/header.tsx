@@ -11,6 +11,7 @@ const viewTitles: Record<ViewType, string> = {
   "add-trade": "Add Trade",
   history: "Trade History",
   reports: "Reports",
+  "live-market": "Live Market",
   "ai-analyzer": "AI Analyzer",
   calendar: "Calendar View",
   backtest: "Backtesting",
