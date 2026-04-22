@@ -192,3 +192,30 @@ Stage Summary:
 - New "Accuracy by Trading Day" chart on Dashboard showing Mon-Fri win rates
 - Full responsive design across all 10+ components for mobile and iPad
 - All APIs functional, no errors
+
+---
+Task ID: 12
+Agent: Main Agent
+Task: Remove Live Market feature, remove demo/seed data, prepare app for publishing
+
+Work Log:
+- Deleted /src/components/market/live-market.tsx
+- Deleted /src/app/api/market/quotes/route.ts
+- Deleted /src/app/api/market/option-chain/route.ts
+- Deleted /src/app/api/seed/route.ts
+- Deleted /src/lib/seed.ts
+- Removed empty /src/components/market/ and /src/app/api/market/ directories
+- Updated store: removed "live-market" from ViewType
+- Updated sidebar: removed Live Market nav item and Activity icon import
+- Updated header: removed "live-market" from viewTitles
+- Rewrote page.tsx: replaced SeedPrompt with clean EmptyState that says "Log Your First Trade"
+- Reset database: deleted old custom.db, ran db:push to create fresh empty DB
+- Verified: 0 trades, 0 users in database - clean slate for real data
+- Lint clean, no errors
+
+Stage Summary:
+- Live Market feature completely removed
+- Demo/seed data feature completely removed
+- App now starts with clean empty state prompting user to "Log Your First Trade"
+- Database is completely empty and ready for real trade data
+- App is publish-ready

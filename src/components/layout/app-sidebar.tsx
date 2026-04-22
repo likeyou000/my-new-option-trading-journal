@@ -13,7 +13,6 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
-  Activity,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -24,7 +23,6 @@ const navItems: { view: ViewType; label: string; icon: React.ElementType }[] = [
   { view: "add-trade", label: "Add Trade", icon: PlusCircle },
   { view: "history", label: "Trade History", icon: ScrollText },
   { view: "reports", label: "Reports", icon: BarChart3 },
-  { view: "live-market", label: "Live Market", icon: Activity },
   { view: "ai-analyzer", label: "AI Analyzer", icon: Brain },
   { view: "calendar", label: "Calendar", icon: Calendar },
   { view: "backtest", label: "Backtesting", icon: Repeat },
