@@ -4,6 +4,7 @@ import { useAppStore, type ViewType } from "@/store/app-store"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Sun, Moon, Menu } from "lucide-react"
+import { useSyncExternalStore } from "react"
 
 const viewTitles: Record<ViewType, string> = {
   dashboard: "Dashboard",
@@ -15,9 +16,20 @@ const viewTitles: Record<ViewType, string> = {
   backtest: "Backtesting",
 }
 
+const emptySubscribe = () => () => {}
+
+function useIsMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,   // client snapshot
+    () => false   // server snapshot
+  )
+}
+
 export function AppHeader() {
   const { currentView, sidebarOpen, setSidebarOpen } = useAppStore()
   const { setTheme, resolvedTheme } = useTheme()
+  const mounted = useIsMounted()
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border bg-card/80 backdrop-blur-sm px-4 lg:px-6">
@@ -41,7 +53,10 @@ export function AppHeader() {
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="h-9 w-9"
         >
-          {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {!mounted
+            ? <Sun className="h-4 w-4" />
+            : (resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />)
+          }
         </Button>
       </div>
     </header>
