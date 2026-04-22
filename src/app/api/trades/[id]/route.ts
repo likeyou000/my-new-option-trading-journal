@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { calculateQuantity, calculatePnl, calculatePnlPercent, calculateCharges, calculateRR, detectOutcome } from '@/lib/options'
 
 // GET /api/trades/[id] - Get a specific trade
 export async function GET(
@@ -34,34 +35,41 @@ export async function PUT(
     const body = await request.json()
 
     const {
-      symbol, date, entryPrice, exitPrice, quantity, direction,
-      stopLoss, target, strategy, outcome, notes,
+      symbol, optionType, strikePrice, expiryDate, tradeType, lots,
+      entryPrice, exitPrice, stopLoss, target, strategy, outcome, notes, date,
       confidence, satisfaction, emotionalState, mistakes, lessonsLearned,
     } = body
 
-    // Calculate P&L
-    let pnl = 0
-    let pnlPercent = 0
     const ep = parseFloat(entryPrice)
     const xp = exitPrice ? parseFloat(exitPrice) : null
-    const qty = parseInt(quantity)
+    const sl = stopLoss ? parseFloat(stopLoss) : null
+    const tgt = target ? parseFloat(target) : null
+    const numLots = parseInt(lots)
+    const numStrike = parseInt(strikePrice)
+    const tradeTypeVal = tradeType || 'BUY'
+
+    // Calculate with lot size logic
+    const quantity = calculateQuantity(symbol, numLots)
+    let pnl = 0
+    let pnlPercent = 0
+    let brokerage = 0
+    let netPnl = 0
 
     if (xp && ep) {
-      if (direction === 'LONG') {
-        pnl = (xp - ep) * qty
-        pnlPercent = ((xp - ep) / ep) * 100
-      } else {
-        pnl = (ep - xp) * qty
-        pnlPercent = ((ep - xp) / ep) * 100
-      }
+      pnl = calculatePnl(tradeTypeVal, ep, xp, quantity)
+      pnlPercent = calculatePnlPercent(tradeTypeVal, ep, xp, quantity)
+      brokerage = calculateCharges(tradeTypeVal, ep, xp, quantity, pnl)
+      netPnl = pnl - brokerage
     }
 
+    // Calculate R:R ratio
     let rrRatio = 0
-    if (stopLoss && target && ep) {
-      const risk = Math.abs(ep - parseFloat(stopLoss))
-      const reward = Math.abs(parseFloat(target) - ep)
-      rrRatio = risk > 0 ? reward / risk : 0
+    if (sl && tgt && ep) {
+      rrRatio = calculateRR(ep, sl, tgt)
     }
+
+    // Auto-detect outcome if exit price provided
+    const finalOutcome = xp ? detectOutcome(pnl) : (outcome || 'PENDING')
 
     // Update or create psychology data
     const existingPsychology = await db.psychology.findUnique({
@@ -98,18 +106,24 @@ export async function PUT(
       where: { id },
       data: {
         symbol,
+        optionType: optionType || 'PE',
+        strikePrice: numStrike,
+        expiryDate: new Date(expiryDate),
+        tradeType: tradeTypeVal,
+        lots: numLots,
+        quantity,
         date: new Date(date),
         entryPrice: ep,
         exitPrice: xp,
-        quantity: qty,
-        direction,
-        stopLoss: stopLoss ? parseFloat(stopLoss) : null,
-        target: target ? parseFloat(target) : null,
+        stopLoss: sl,
+        target: tgt,
         strategy: strategy || null,
-        outcome: outcome || 'PENDING',
+        outcome: finalOutcome,
         notes: notes || null,
         pnl: Math.round(pnl * 100) / 100,
         pnlPercent: Math.round(pnlPercent * 100) / 100,
+        brokerage: Math.round(brokerage * 100) / 100,
+        netPnl: Math.round(netPnl * 100) / 100,
         rrRatio: Math.round(rrRatio * 100) / 100,
       },
       include: { psychology: true },
@@ -129,10 +143,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-
-    // Psychology will be cascade deleted
     await db.trade.delete({ where: { id } })
-
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting trade:', error)

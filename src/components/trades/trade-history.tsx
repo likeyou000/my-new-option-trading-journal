@@ -30,6 +30,7 @@ import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
 import { Edit, Trash2, Eye, Search, TrendingUp, TrendingDown, ArrowUpDown } from "lucide-react"
 import { useState } from "react"
+import { LOT_SIZES } from "@/lib/options"
 
 export function TradeHistory() {
   const { setEditingTradeId, setCurrentView } = useAppStore()
@@ -37,17 +38,19 @@ export function TradeHistory() {
   const [search, setSearch] = useState("")
   const [filterStrategy, setFilterStrategy] = useState("all")
   const [filterOutcome, setFilterOutcome] = useState("all")
+  const [filterOptionType, setFilterOptionType] = useState("all")
   const [selectedTrade, setSelectedTrade] = useState<Record<string, unknown> | null>(null)
   const [sortField, setSortField] = useState<string>("date")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
 
   const { data, isLoading } = useQuery({
-    queryKey: ["trades", search, filterStrategy, filterOutcome],
+    queryKey: ["trades", search, filterStrategy, filterOutcome, filterOptionType],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (search) params.set("symbol", search)
       if (filterStrategy && filterStrategy !== "all") params.set("strategy", filterStrategy)
       if (filterOutcome && filterOutcome !== "all") params.set("outcome", filterOutcome)
+      if (filterOptionType && filterOptionType !== "all") params.set("optionType", filterOptionType)
       const res = await fetch(`/api/trades?${params.toString()}`)
       if (!res.ok) throw new Error("Failed to fetch trades")
       return res.json()
@@ -91,11 +94,23 @@ export function TradeHistory() {
 
   const uniqueStrategies = [...new Set(trades.map((t: Record<string, unknown>) => t.strategy).filter(Boolean))] as string[]
 
+  const getTradeName = (trade: Record<string, unknown>) => {
+    const sym = trade.symbol as string
+    const strike = trade.strikePrice as number
+    const ot = trade.optionType as string
+    const expiry = trade.expiryDate as string
+    if (!sym || !strike || !ot) return sym || ""
+    if (!expiry) return `${sym} ${strike} ${ot}`
+    const d = new Date(expiry)
+    const monthShort = d.toLocaleString('en-IN', { month: 'short' }).toUpperCase()
+    return `${sym} ${strike} ${ot} (${d.getDate()} ${monthShort})`
+  }
+
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-2xl font-bold tracking-tight">Trade History</h3>
-        <p className="text-muted-foreground text-sm">View and manage all your trades</p>
+        <p className="text-muted-foreground text-sm">View and manage all your options trades</p>
       </div>
 
       {/* Filters */}
@@ -111,6 +126,16 @@ export function TradeHistory() {
                 onChange={(e) => setSearch(e.target.value.toUpperCase())}
               />
             </div>
+            <Select value={filterOptionType} onValueChange={setFilterOptionType}>
+              <SelectTrigger className="w-full sm:w-[120px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="CE">CE (Call)</SelectItem>
+                <SelectItem value="PE">PE (Put)</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={filterStrategy} onValueChange={setFilterStrategy}>
               <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="Strategy" />
@@ -128,8 +153,8 @@ export function TradeHistory() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Outcomes</SelectItem>
-                <SelectItem value="SUCCESS">Success</SelectItem>
-                <SelectItem value="FAIL">Fail</SelectItem>
+                <SelectItem value="WIN">Win</SelectItem>
+                <SelectItem value="LOSS">Loss</SelectItem>
                 <SelectItem value="BE">Breakeven</SelectItem>
                 <SelectItem value="PENDING">Pending</SelectItem>
               </SelectContent>
@@ -148,17 +173,18 @@ export function TradeHistory() {
                   <TableHead className="cursor-pointer" onClick={() => toggleSort("date")}>
                     <div className="flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
-                  <TableHead>Symbol</TableHead>
+                  <TableHead>Trade Name</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
+                  <TableHead className="hidden md:table-cell">Side</TableHead>
                   <TableHead className="cursor-pointer hidden md:table-cell" onClick={() => toggleSort("entryPrice")}>
                     <div className="flex items-center gap-1">Entry <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">Exit</TableHead>
+                  <TableHead className="hidden lg:table-cell">Exit</TableHead>
+                  <TableHead className="hidden sm:table-cell">Lots</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => toggleSort("pnl")}>
                     <div className="flex items-center gap-1">P&L <ArrowUpDown className="h-3 w-3" /></div>
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">R:R</TableHead>
-                  <TableHead className="hidden sm:table-cell">Strategy</TableHead>
+                  <TableHead className="hidden lg:table-cell">Net P&L</TableHead>
                   <TableHead className="hidden sm:table-cell">Outcome</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -167,54 +193,68 @@ export function TradeHistory() {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      {Array.from({ length: 10 }).map((_, j) => (
+                      {Array.from({ length: 11 }).map((_, j) => (
                         <TableCell key={j}><div className="h-4 bg-muted rounded animate-pulse" /></TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : sortedTrades.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                       No trades found
                     </TableCell>
                   </TableRow>
                 ) : (
                   sortedTrades.map((trade: Record<string, unknown>) => {
                     const pnl = trade.pnl as number
+                    const netPnl = (trade.netPnl as number) ?? pnl
                     const pnlPercent = trade.pnlPercent as number
                     return (
                       <TableRow key={trade.id as string} className="hover:bg-muted/50">
                         <TableCell className="text-xs">
                           {new Date(trade.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                         </TableCell>
-                        <TableCell className="font-medium">{trade.symbol as string}</TableCell>
+                        <TableCell className="font-medium text-xs">
+                          {getTradeName(trade)}
+                        </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <Badge
                             variant="outline"
-                            className={trade.direction === "LONG"
+                            className={(trade.optionType as string) === "CE"
                               ? "border-emerald-500 text-emerald-500"
                               : "border-red-500 text-red-500"
                             }
                           >
-                            {trade.direction === "LONG" ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                            {trade.direction === "LONG" ? "CALL" : "PUT"}
+                            {(trade.optionType as string) === "CE" ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                            {trade.optionType as string}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge
+                            variant="outline"
+                            className={(trade.tradeType as string) === "BUY"
+                              ? "border-emerald-500 text-emerald-500"
+                              : "border-amber-500 text-amber-500"
+                            }
+                          >
+                            {trade.tradeType as string}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-xs hidden md:table-cell">₹{(trade.entryPrice as number).toFixed(2)}</TableCell>
-                        <TableCell className="font-mono text-xs hidden md:table-cell">{trade.exitPrice ? `₹${(trade.exitPrice as number).toFixed(2)}` : "-"}</TableCell>
+                        <TableCell className="font-mono text-xs hidden lg:table-cell">{trade.exitPrice ? `₹${(trade.exitPrice as number).toFixed(2)}` : "-"}</TableCell>
+                        <TableCell className="text-xs hidden sm:table-cell">{trade.lots as number}</TableCell>
                         <TableCell className={pnl > 0 ? "text-emerald-500 font-medium" : pnl < 0 ? "text-red-500 font-medium" : ""}>
-                          ₹{pnl.toFixed(2)}
+                          ₹{pnl.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           <span className="text-xs ml-1">({pnlPercent.toFixed(1)}%)</span>
                         </TableCell>
-                        <TableCell className="font-mono text-xs hidden lg:table-cell">{(trade.rrRatio as number)?.toFixed(2) || "-"}</TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge variant="secondary" className="text-xs">{(trade.strategy as string) || "-"}</Badge>
+                        <TableCell className={`hidden lg:table-cell font-medium ${netPnl > 0 ? "text-emerald-500" : netPnl < 0 ? "text-red-500" : ""}`}>
+                          ₹{netPnl.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <Badge
                             className={
-                              (trade.outcome as string) === "SUCCESS" ? "bg-emerald-500/15 text-emerald-500" :
-                              (trade.outcome as string) === "FAIL" ? "bg-red-500/15 text-red-500" :
+                              (trade.outcome as string) === "WIN" ? "bg-emerald-500/15 text-emerald-500" :
+                              (trade.outcome as string) === "LOSS" ? "bg-red-500/15 text-red-500" :
                               (trade.outcome as string) === "BE" ? "bg-yellow-500/15 text-yellow-600" :
                               "bg-muted text-muted-foreground"
                             }
@@ -268,22 +308,31 @@ export function TradeHistory() {
         <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {(selectedTrade?.symbol as string)} - {new Date(selectedTrade?.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+              {selectedTrade && getTradeName(selectedTrade)}
             </DialogTitle>
           </DialogHeader>
           {selectedTrade && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Type:</span> <span className={`font-medium ml-1 ${(selectedTrade.direction as string) === "LONG" ? "text-emerald-500" : "text-red-500"}`}>{(selectedTrade.direction as string) === "LONG" ? "CALL" : "PUT"}</span></div>
-                <div><span className="text-muted-foreground">Outcome:</span> <span className="font-medium ml-1">{selectedTrade.outcome as string}</span></div>
+                <div><span className="text-muted-foreground">Date:</span> <span className="font-medium ml-1">{new Date(selectedTrade.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span></div>
+                <div><span className="text-muted-foreground">Option:</span> <span className={`font-medium ml-1 ${(selectedTrade.optionType as string) === "CE" ? "text-emerald-500" : "text-red-500"}`}>{selectedTrade.optionType as string}</span></div>
+                <div><span className="text-muted-foreground">Strike:</span> <span className="font-mono ml-1">{selectedTrade.strikePrice as number}</span></div>
+                <div><span className="text-muted-foreground">Expiry:</span> <span className="font-medium ml-1">{new Date(selectedTrade.expiryDate as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>
+                <div><span className="text-muted-foreground">Side:</span> <Badge variant="outline" className="ml-1">{selectedTrade.tradeType as string}</Badge></div>
+                <div><span className="text-muted-foreground">Lots:</span> <span className="font-mono ml-1">{selectedTrade.lots as number} ({selectedTrade.quantity as number} qty)</span></div>
                 <div><span className="text-muted-foreground">Entry:</span> <span className="font-mono ml-1">₹{(selectedTrade.entryPrice as number).toFixed(2)}</span></div>
                 <div><span className="text-muted-foreground">Exit:</span> <span className="font-mono ml-1">{selectedTrade.exitPrice ? `₹${(selectedTrade.exitPrice as number).toFixed(2)}` : "-"}</span></div>
-                <div><span className="text-muted-foreground">Lots:</span> <span className="font-mono ml-1">{selectedTrade.quantity as number}</span></div>
-                <div><span className="text-muted-foreground">Strategy:</span> <span className="font-medium ml-1">{(selectedTrade.strategy as string) || "-"}</span></div>
                 <div><span className="text-muted-foreground">Stop Loss:</span> <span className="font-mono ml-1">{selectedTrade.stopLoss ? `₹${(selectedTrade.stopLoss as number).toFixed(2)}` : "-"}</span></div>
                 <div><span className="text-muted-foreground">Target:</span> <span className="font-mono ml-1">{selectedTrade.target ? `₹${(selectedTrade.target as number).toFixed(2)}` : "-"}</span></div>
-                <div><span className="text-muted-foreground">P&L:</span> <span className={`font-mono ml-1 ${(selectedTrade.pnl as number) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{(selectedTrade.pnl as number).toFixed(2)}</span></div>
+                <div><span className="text-muted-foreground">Gross P&L:</span> <span className={`font-mono ml-1 ${(selectedTrade.pnl as number) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{(selectedTrade.pnl as number).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                <div><span className="text-muted-foreground">Brokerage:</span> <span className="font-mono ml-1 text-amber-500">₹{(selectedTrade.brokerage as number || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                <div><span className="text-muted-foreground">Net P&L:</span> <span className={`font-mono ml-1 font-bold ${((selectedTrade.netPnl as number) ?? (selectedTrade.pnl as number)) >= 0 ? "text-emerald-500" : "text-red-500"}`}>₹{((selectedTrade.netPnl as number) ?? (selectedTrade.pnl as number)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                 <div><span className="text-muted-foreground">R:R:</span> <span className="font-mono ml-1">{(selectedTrade.rrRatio as number)?.toFixed(2) || "-"}</span></div>
+                <div><span className="text-muted-foreground">Outcome:</span> <Badge className="ml-1" variant={
+                  (selectedTrade.outcome as string) === "WIN" ? "default" :
+                  (selectedTrade.outcome as string) === "LOSS" ? "destructive" : "secondary"
+                }>{selectedTrade.outcome as string}</Badge></div>
+                <div><span className="text-muted-foreground">Strategy:</span> <span className="font-medium ml-1">{(selectedTrade.strategy as string) || "-"}</span></div>
               </div>
 
               {selectedTrade.notes && (

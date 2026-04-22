@@ -1,9 +1,7 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { calculateQuantity, calculatePnl, calculatePnlPercent, calculateCharges, calculateRR, detectOutcome, LOT_SIZES } from '@/lib/options'
 
-const DEMO_USER_ID = 'demo-user-id'
-
-// Helper to get or create demo user
 async function getDemoUserId() {
   let user = await db.user.findFirst()
   if (!user) {
@@ -24,7 +22,7 @@ export async function GET(request: Request) {
     const symbol = searchParams.get('symbol')
     const strategy = searchParams.get('strategy')
     const outcome = searchParams.get('outcome')
-    const direction = searchParams.get('direction')
+    const optionType = searchParams.get('optionType')
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
@@ -33,7 +31,7 @@ export async function GET(request: Request) {
     if (symbol) where.symbol = symbol
     if (strategy) where.strategy = strategy
     if (outcome) where.outcome = outcome
-    if (direction) where.direction = direction
+    if (optionType) where.optionType = optionType
     if (startDate || endDate) {
       where.date = {}
       if (startDate) (where.date as Record<string, unknown>).gte = new Date(startDate)
@@ -64,48 +62,64 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     const {
-      symbol, date, entryPrice, exitPrice, quantity, direction,
-      stopLoss, target, strategy, outcome, notes,
+      symbol, optionType, strikePrice, expiryDate, tradeType, lots,
+      entryPrice, exitPrice, stopLoss, target, strategy, outcome, notes, date,
       confidence, satisfaction, emotionalState, mistakes, lessonsLearned,
     } = body
 
-    // Calculate P&L
+    const ep = parseFloat(entryPrice)
+    const xp = exitPrice ? parseFloat(exitPrice) : null
+    const sl = stopLoss ? parseFloat(stopLoss) : null
+    const tgt = target ? parseFloat(target) : null
+    const numLots = parseInt(lots)
+    const numStrike = parseInt(strikePrice)
+    const tradeTypeVal = tradeType || 'BUY'
+
+    // Calculate with lot size logic
+    const quantity = calculateQuantity(symbol, numLots)
     let pnl = 0
     let pnlPercent = 0
-    if (exitPrice && entryPrice) {
-      if (direction === 'LONG') {
-        pnl = (exitPrice - entryPrice) * quantity
-        pnlPercent = ((exitPrice - entryPrice) / entryPrice) * 100
-      } else {
-        pnl = (entryPrice - exitPrice) * quantity
-        pnlPercent = ((entryPrice - exitPrice) / entryPrice) * 100
-      }
+    let brokerage = 0
+    let netPnl = 0
+
+    if (xp && ep) {
+      pnl = calculatePnl(tradeTypeVal, ep, xp, quantity)
+      pnlPercent = calculatePnlPercent(tradeTypeVal, ep, xp, quantity)
+      brokerage = calculateCharges(tradeTypeVal, ep, xp, quantity, pnl)
+      netPnl = pnl - brokerage
     }
 
     // Calculate R:R ratio
     let rrRatio = 0
-    if (stopLoss && target && entryPrice) {
-      const risk = Math.abs(entryPrice - stopLoss)
-      const reward = Math.abs(target - entryPrice)
-      rrRatio = risk > 0 ? reward / risk : 0
+    if (sl && tgt && ep) {
+      rrRatio = calculateRR(ep, sl, tgt)
     }
+
+    // Auto-detect outcome if exit price provided
+    const finalOutcome = xp ? detectOutcome(pnl) : (outcome || 'PENDING')
 
     const trade = await db.trade.create({
       data: {
         userId,
         symbol,
+        optionType: optionType || 'PE',
+        strikePrice: numStrike,
+        expiryDate: new Date(expiryDate),
+        tradeType: tradeTypeVal,
+        lots: numLots,
+        quantity,
         date: new Date(date),
-        entryPrice: parseFloat(entryPrice),
-        exitPrice: exitPrice ? parseFloat(exitPrice) : null,
-        quantity: parseInt(quantity),
-        direction: direction || 'LONG',
-        stopLoss: stopLoss ? parseFloat(stopLoss) : null,
-        target: target ? parseFloat(target) : null,
+        entryPrice: ep,
+        exitPrice: xp,
+        stopLoss: sl,
+        target: tgt,
         strategy: strategy || null,
-        outcome: outcome || 'PENDING',
+        outcome: finalOutcome,
         notes: notes || null,
         pnl: Math.round(pnl * 100) / 100,
         pnlPercent: Math.round(pnlPercent * 100) / 100,
+        brokerage: Math.round(brokerage * 100) / 100,
+        netPnl: Math.round(netPnl * 100) / 100,
         rrRatio: Math.round(rrRatio * 100) / 100,
         psychology: confidence ? {
           create: {

@@ -2,15 +2,21 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, TrendingDown, Target, BarChart3, Brain, Activity } from "lucide-react"
+import { TrendingUp, TrendingDown, Target, BarChart3, Brain, Activity, IndianRupee, PieChart } from "lucide-react"
 import { motion } from "framer-motion"
 
 interface StatsData {
   totalPnl: number
+  netPnl: number
+  totalBrokerage: number
   winRate: number
   avgRR: number
   totalTrades: number
   confidenceIndex: number
+  cePeBreakdown?: {
+    ce: { count: number; pnl: number; winRate: number }
+    pe: { count: number; pnl: number; winRate: number }
+  }
 }
 
 interface StatsCardsProps {
@@ -42,13 +48,17 @@ export function StatsCards({ data, isLoading }: StatsCardsProps) {
     )
   }
 
+  const netPnl = data?.netPnl ?? data?.totalPnl ?? 0
+  const grossPnl = data?.totalPnl ?? 0
+
   const cards = [
     {
-      title: "Total P&L",
-      value: `₹${(data?.totalPnl || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-      icon: data?.totalPnl && data.totalPnl > 0 ? TrendingUp : TrendingDown,
-      color: data?.totalPnl && data.totalPnl > 0 ? "text-emerald-500" : "text-red-500",
-      bg: data?.totalPnl && data.totalPnl > 0 ? "bg-emerald-500/10" : "bg-red-500/10",
+      title: "Net P&L",
+      value: `₹${netPnl.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+      subtitle: data?.totalBrokerage ? `Charges: ₹${data.totalBrokerage.toLocaleString('en-IN', { minimumFractionDigits: 0 })}` : undefined,
+      icon: netPnl > 0 ? TrendingUp : TrendingDown,
+      color: netPnl > 0 ? "text-emerald-500" : "text-red-500",
+      bg: netPnl > 0 ? "bg-emerald-500/10" : "bg-red-500/10",
     },
     {
       title: "Win Rate",
@@ -81,37 +91,96 @@ export function StatsCards({ data, isLoading }: StatsCardsProps) {
   ]
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
-      {cards.map((card, i) => {
-        const Icon = card.icon
-        return (
-          <motion.div
-            key={card.title}
-            custom={i}
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                      {card.title}
-                    </p>
-                    <p className={`text-xl lg:text-2xl font-bold mt-1 ${card.color}`}>
-                      {card.value}
-                    </p>
+    <div className="space-y-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+        {cards.map((card, i) => {
+          const Icon = card.icon
+          return (
+            <motion.div
+              key={card.title}
+              custom={i}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4 lg:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        {card.title}
+                      </p>
+                      <p className={`text-xl lg:text-2xl font-bold mt-1 ${card.color}`}>
+                        {card.value}
+                      </p>
+                      {card.subtitle && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{card.subtitle}</p>
+                      )}
+                    </div>
+                    <div className={`h-9 w-9 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center ${card.bg}`}>
+                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
+                    </div>
                   </div>
-                  <div className={`h-9 w-9 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center ${card.bg}`}>
-                    <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* CE/PE Breakdown */}
+      {data?.cePeBreakdown && (data.cePeBreakdown.ce.count > 0 || data.cePeBreakdown.pe.count > 0) && (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">CE (Call) Trades</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-lg font-bold">{data.cePeBreakdown.ce.count} trades</p>
+                    <p className={`text-sm font-medium ${data.cePeBreakdown.ce.pnl >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                      ₹{data.cePeBreakdown.ce.pnl.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+                    </p>
+                    <BadgeCE winRate={data.cePeBreakdown.ce.winRate} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )
-      })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <TrendingDown className="h-5 w-5 text-red-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">PE (Put) Trades</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-lg font-bold">{data.cePeBreakdown.pe.count} trades</p>
+                    <p className={`text-sm font-medium ${data.cePeBreakdown.pe.pnl >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                      ₹{data.cePeBreakdown.pe.pnl.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+                    </p>
+                    <BadgeCE winRate={data.cePeBreakdown.pe.winRate} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
+  )
+}
+
+function BadgeCE({ winRate }: { winRate: number }) {
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+      winRate >= 50 ? "bg-emerald-500/15 text-emerald-500" : "bg-red-500/15 text-red-500"
+    }`}>
+      {winRate.toFixed(0)}% WR
+    </span>
   )
 }

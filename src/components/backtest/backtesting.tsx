@@ -13,8 +13,9 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Play, History, TrendingUp, TrendingDown, Target, AlertTriangle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { SYMBOLS, LOT_SIZES } from "@/lib/options"
 
-const STRATEGIES = ["Breakout", "Scalping", "Mean Reversion", "Momentum", "Trend Following", "VWAP", "Custom"]
+const STRATEGIES = ["Breakout", "Scalping", "Mean Reversion", "Momentum", "Trend Following", "VWAP", "Directional", "Custom"]
 
 const chartConfig: ChartConfig = {
   equity: { label: "Equity", color: "hsl(160, 84%, 39%)" },
@@ -23,7 +24,7 @@ const chartConfig: ChartConfig = {
 export function Backtesting() {
   const [form, setForm] = useState({
     name: "",
-    symbol: "",
+    symbol: "NIFTY",
     startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     endDate: new Date().toISOString().split("T")[0],
     strategy: "",
@@ -81,7 +82,7 @@ export function Backtesting() {
           <Play className="h-7 w-7 text-emerald-500" />
           Backtesting
         </h3>
-        <p className="text-muted-foreground text-sm">Test your strategies against historical data</p>
+        <p className="text-muted-foreground text-sm">Test your options strategies against historical trade data</p>
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
@@ -95,18 +96,21 @@ export function Backtesting() {
               <div className="space-y-2">
                 <Label>Test Name</Label>
                 <Input
-                  placeholder="e.g., NIFTY Breakout Test"
+                  placeholder="e.g., NIFTY PE Breakout"
                   value={form.name}
                   onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Symbol</Label>
-                <Input
-                  placeholder="e.g., NIFTY (empty for all)"
-                  value={form.symbol}
-                  onChange={(e) => setForm(prev => ({ ...prev, symbol: e.target.value.toUpperCase() }))}
-                />
+                <Select value={form.symbol} onValueChange={(v) => setForm(prev => ({ ...prev, symbol: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SYMBOLS.map(s => (
+                      <SelectItem key={s} value={s}>{s} (Lot: {LOT_SIZES[s]})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Start Date</Label>
@@ -146,7 +150,7 @@ export function Backtesting() {
             <div className="space-y-2">
               <Label>Entry Condition</Label>
               <Textarea
-                placeholder="e.g., Price breaks above 20-day high with volume > 1.5x average"
+                placeholder="e.g., Buy PE when RSI > 70 and price breaks below support"
                 value={form.entryCondition}
                 onChange={(e) => setForm(prev => ({ ...prev, entryCondition: e.target.value }))}
                 rows={2}
@@ -156,7 +160,7 @@ export function Backtesting() {
             <div className="space-y-2">
               <Label>Exit Condition</Label>
               <Textarea
-                placeholder="e.g., Price closes below 10-day low or RSI > 80"
+                placeholder="e.g., Exit when premium doubles or SL hit at 50% of entry premium"
                 value={form.exitCondition}
                 onChange={(e) => setForm(prev => ({ ...prev, exitCondition: e.target.value }))}
                 rows={2}
@@ -169,7 +173,7 @@ export function Backtesting() {
                 <Input
                   type="number"
                   step="0.1"
-                  placeholder="e.g., 1.5"
+                  placeholder="e.g., 50 (of premium)"
                   value={form.stopLoss}
                   onChange={(e) => setForm(prev => ({ ...prev, stopLoss: e.target.value }))}
                 />
@@ -179,7 +183,7 @@ export function Backtesting() {
                 <Input
                   type="number"
                   step="0.1"
-                  placeholder="e.g., 3.0"
+                  placeholder="e.g., 100 (of premium)"
                   value={form.takeProfit}
                   onChange={(e) => setForm(prev => ({ ...prev, takeProfit: e.target.value }))}
                 />
@@ -204,7 +208,6 @@ export function Backtesting() {
         <div className="space-y-4">
           {selectedBacktest && (
             <>
-              {/* Results Summary */}
               <div className="grid grid-cols-2 gap-3">
                 <Card>
                   <CardContent className="p-4">
@@ -252,7 +255,6 @@ export function Backtesting() {
                 </Card>
               </div>
 
-              {/* Equity Curve */}
               {equityCurve.length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">
@@ -277,7 +279,6 @@ export function Backtesting() {
                 </Card>
               )}
 
-              {/* Trade List */}
               {tradeList.length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">

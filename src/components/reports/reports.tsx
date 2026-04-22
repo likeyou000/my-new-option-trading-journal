@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts"
-import { TrendingUp, TrendingDown, Target, Calendar, Brain, Award } from "lucide-react"
+import { TrendingUp, TrendingDown, Target, Calendar, Brain, Award, IndianRupee } from "lucide-react"
 
 const chartConfig: ChartConfig = {
   pnl: { label: "P&L", color: "hsl(160, 84%, 39%)" },
@@ -46,7 +46,7 @@ export function Reports() {
     <div className="space-y-4 sm:space-y-6">
       <div>
         <h3 className="text-2xl font-bold tracking-tight">Reports</h3>
-        <p className="text-muted-foreground text-sm">Detailed performance analytics</p>
+        <p className="text-muted-foreground text-sm">Detailed options trading analytics</p>
       </div>
 
       <Tabs defaultValue="performance" className="space-y-4">
@@ -113,6 +113,19 @@ export function Reports() {
             <Card>
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <IndianRupee className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Brokerage</p>
+                    <p className="text-xl font-bold text-amber-500">₹{(data?.totalBrokerage || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 lg:p-6">
+                <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                     <Award className="h-5 w-5 text-emerald-500" />
                   </div>
@@ -124,24 +137,37 @@ export function Reports() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Worst Day</p>
-                    <p className="text-xl font-bold text-red-500">₹{(adv.worstDay?.pnl || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                    <p className="text-xs text-muted-foreground">{adv.worstDay?.date}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="advanced" className="space-y-4">
+          {/* Option Type Performance (CE vs PE) */}
+          {data?.optionTypePerformance && data.optionTypePerformance.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">CE vs PE Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
+                  <BarChart data={data.optionTypePerformance} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <XAxis dataKey="name" className="text-xs" tick={{ fontSize: 12 }} />
+                    <YAxis tickFormatter={(v) => `₹${v}`} className="text-xs" tick={{ fontSize: 10 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
+                      {data.optionTypePerformance.map((entry: { name: string; pnl: number }, index: number) => (
+                        <Cell
+                          key={index}
+                          fill={entry.name === "CE" ? "hsl(160, 84%, 39%)" : "hsl(0, 84%, 60%)"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Strategy Performance */}
           <Card>
             <CardHeader className="pb-2">

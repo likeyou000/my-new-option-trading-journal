@@ -19,22 +19,39 @@ model User {
 model Trade {
   id          String   @id @default(cuid())
   userId      String
-  symbol      String
-  date        DateTime
-  entryPrice  Float
-  exitPrice   Float?
-  quantity    Int
-  direction   String   @default("LONG")
-  stopLoss    Float?
-  target      Float?
+
+  // Options-specific fields
+  symbol      String             // NIFTY, BANKNIFTY, FINNIFTY
+  optionType  String             // CE or PE
+  strikePrice Int                // Strike price e.g. 22500
+  expiryDate  DateTime           // Expiry date of the option
+  tradeType   String   @default("BUY") // BUY or SELL (option buying vs writing)
+  lots        Int                // Number of lots
+
+  // Price fields (premium)
+  entryPrice  Float              // Entry premium
+  exitPrice   Float?             // Exit premium (null if open)
+
+  // Risk management
+  stopLoss    Float?             // Stop loss premium
+  target      Float?             // Target premium
+
+  // Calculated fields
+  quantity    Int                // lotSize * lots (auto-calculated)
+  pnl         Float?             // Gross P&L
+  pnlPercent  Float?             // P&L % based on investment
+  brokerage   Float?             // Estimated brokerage + charges
+  netPnl      Float?             // Net P&L after charges
+  rrRatio     Float?             // Risk:Reward ratio
+
+  // Meta
   strategy    String?
-  outcome     String   @default("PENDING")
+  outcome     String   @default("PENDING") // WIN, LOSS, BE, PENDING
   notes       String?
-  pnl         Float?
-  pnlPercent  Float?
-  rrRatio     Float?
+  date        DateTime           // Trade date
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   psychology  Psychology?
 
@@ -42,19 +59,20 @@ model Trade {
   @@index([date])
   @@index([symbol])
   @@index([strategy])
+  @@index([optionType])
 }
 
 model Psychology {
-  id            String   @id @default(cuid())
-  tradeId       String   @unique
-  confidence    Int      @default(5)
-  satisfaction  Int      @default(5)
-  emotionalState String  @default("Calm")
-  mistakes      String?
+  id             String   @id @default(cuid())
+  tradeId        String   @unique
+  confidence     Int      @default(5)
+  satisfaction   Int      @default(5)
+  emotionalState String   @default("Calm")
+  mistakes       String?
   lessonsLearned String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  trade         Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  trade          Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 }
 
 model BacktestResult {

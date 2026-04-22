@@ -57,6 +57,15 @@ export function AIAnalyzer() {
 
   const trades = tradesData?.trades || []
 
+  const getTradeLabel = (t: Record<string, unknown>) => {
+    const sym = t.symbol as string
+    const strike = t.strikePrice as number
+    const ot = t.optionType as string
+    const date = new Date(t.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+    const pnl = (t.netPnl as number) ?? (t.pnl as number)
+    return `${sym} ${strike} ${ot} - ${date} - ₹${pnl.toFixed(0)}`
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
@@ -64,7 +73,7 @@ export function AIAnalyzer() {
           <Brain className="h-7 w-7 text-emerald-500" />
           AI Analyzer
         </h3>
-        <p className="text-muted-foreground text-sm">Get AI-powered insights on your trading performance</p>
+        <p className="text-muted-foreground text-sm">Get AI-powered insights on your options trading performance</p>
       </div>
 
       <Tabs defaultValue="trade-review" className="space-y-4">
@@ -97,7 +106,7 @@ export function AIAnalyzer() {
                       <SelectItem value="recent">Recent 10 Trades</SelectItem>
                       {trades.map((t: Record<string, unknown>) => (
                         <SelectItem key={t.id as string} value={t.id as string}>
-                          {t.symbol as string} - {new Date(t.date as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} - ₹{(t.pnl as number).toFixed(2)}
+                          {getTradeLabel(t)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -137,7 +146,7 @@ export function AIAnalyzer() {
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3 items-end">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Generate an AI-powered weekly report</p>
+                  <p className="text-sm text-muted-foreground mb-2">Generate an AI-powered weekly report with net P&L and charges breakdown</p>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
@@ -197,7 +206,7 @@ export function AIAnalyzer() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Get AI-powered analysis of your strategy performance and optimization suggestions.
+                Get AI-powered analysis of your strategy performance with CE/PE breakdown and optimization suggestions.
               </p>
               <Button
                 onClick={() => strategyMutation.mutate()}

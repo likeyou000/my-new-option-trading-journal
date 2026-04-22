@@ -26,7 +26,7 @@ export function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl sm:text-2xl font-bold tracking-tight">Trading Overview</h3>
-          <p className="text-muted-foreground text-sm">Your trading performance at a glance</p>
+          <p className="text-muted-foreground text-sm">Your options trading performance at a glance</p>
         </div>
         <Button
           variant="outline"

@@ -33,13 +33,21 @@ export async function POST() {
 
     const strategyStats = Array.from(strategyMap.entries()).map(([name, stratTrades]) => {
       const pnl = stratTrades.reduce((s, t) => s + (t.pnl || 0), 0)
+      const netPnl = stratTrades.reduce((s, t) => s + (t.netPnl || t.pnl || 0), 0)
+      const brokerage = stratTrades.reduce((s, t) => s + (t.brokerage || 0), 0)
       const wins = stratTrades.filter(t => (t.pnl || 0) > 0).length
+      const ceTrades = stratTrades.filter(t => t.optionType === 'CE').length
+      const peTrades = stratTrades.filter(t => t.optionType === 'PE').length
       return {
         name,
         trades: stratTrades.length,
         pnl: Math.round(pnl * 100) / 100,
+        netPnl: Math.round(netPnl * 100) / 100,
+        brokerage: Math.round(brokerage * 100) / 100,
         winRate: stratTrades.length > 0 ? Math.round((wins / stratTrades.length) * 10000) / 100 : 0,
         avgPnl: stratTrades.length > 0 ? Math.round((pnl / stratTrades.length) * 100) / 100 : 0,
+        ceTrades,
+        peTrades,
       }
     })
 
@@ -49,18 +57,27 @@ export async function POST() {
       messages: [
         {
           role: 'assistant',
-          content: `You are an expert Indian options trading strategy analyst. The trader trades options (CALL & PUT) on NIFTY, BANKNIFTY and Indian stocks. Direction "LONG" = bought CALL, "SHORT" = bought PUT. Analyze the trader's strategy performance data and provide actionable insights.
+          content: `You are an expert Indian options trading strategy analyst. The trader trades options (CE=Call, PE=Put) on NIFTY (lot: 50), BANKNIFTY (lot: 15), FINNIFTY (lot: 40).
+
+Key terms:
+- optionType: CE = Call Option, PE = Put Option
+- tradeType: BUY = Option Buying, SELL = Option Writing
+- netPnl: Net P&L after brokerage charges
+- brokerage: Total estimated charges
+- ceTrades/peTrades: Count of CE vs PE trades per strategy
+
+Analyze the trader's strategy performance data and provide actionable insights.
 Use markdown formatting with headers, bullet points, and emojis.
 
 Structure your response as:
 ## 🏆 Best Performing Setups
-Identify and explain which strategies work best and why.
+Identify and explain which strategies work best and why. Include CE vs PE performance per strategy.
 
 ## ⚠️ Underperforming Strategies
 Identify which strategies need improvement.
 
 ## 🔧 Optimization Suggestions
-Specific suggestions to optimize each strategy for options trading.
+Specific suggestions to optimize each strategy for options trading. Include position sizing and SL recommendations.
 
 ## 📊 Strategy Rankings
 Rank strategies from best to worst with reasoning.
@@ -70,13 +87,14 @@ Which strategy to focus on and which to reconsider.`
         },
         {
           role: 'user',
-          content: `Analyze my options trading strategy performance. Direction LONG = CALL, SHORT = PUT.
+          content: `Analyze my options trading strategy performance.
 
 Strategy Performance Data:
 ${JSON.stringify(strategyStats, null, 2)}
 
 Total trades: ${trades.length}
-Overall P&L: ₹${trades.reduce((s, t) => s + (t.pnl || 0), 0).toFixed(2)}
+Overall Net P&L: ₹${trades.reduce((s, t) => s + (t.netPnl || t.pnl || 0), 0).toFixed(2)}
+Total Brokerage: ₹${trades.reduce((s, t) => s + (t.brokerage || 0), 0).toFixed(2)}
 
 Please identify best-performing setups and suggest optimizations.`
         }

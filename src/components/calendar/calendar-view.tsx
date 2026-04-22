@@ -67,14 +67,14 @@ export function CalendarView() {
     <div className="space-y-4 sm:space-y-6">
       <div>
         <h3 className="text-2xl font-bold tracking-tight">Calendar View</h3>
-        <p className="text-muted-foreground text-sm">Daily P&L overview on a calendar</p>
+        <p className="text-muted-foreground text-sm">Daily net P&L overview on a calendar</p>
       </div>
 
       {/* Monthly Summary */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Monthly P&L</p>
+            <p className="text-xs text-muted-foreground">Monthly Net P&L</p>
             <p className={`text-lg sm:text-xl font-bold ${monthlyPnl.total >= 0 ? "text-emerald-500" : "text-red-500"}`}>
               ₹{monthlyPnl.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </p>
