@@ -1,25 +1,18 @@
 import { NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
 import { db } from '@/lib/db'
-import { LOT_SIZES } from '@/lib/options'
-
-async function getDemoUserId() {
-  let user = await db.user.findFirst()
-  if (!user) {
-    user = await db.user.create({
-      data: { email: 'demo@tradediary.ai', name: 'Demo Trader' },
-    })
-  }
-  return user.id
-}
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 // POST /api/ai/analyze - Analyze a single trade or recent trades
 export async function POST(request: Request) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { tradeId } = body
-
-    const userId = await getDemoUserId()
 
     let tradeData
     if (tradeId) {
@@ -27,7 +20,7 @@ export async function POST(request: Request) {
         where: { id: tradeId },
         include: { psychology: true },
       })
-      if (!trade) {
+      if (!trade || trade.userId !== userId) {
         return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
       }
       tradeData = trade

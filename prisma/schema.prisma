@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id // Supabase Auth user ID (set manually)
   email     String   @unique
   name      String?
   createdAt DateTime @default(now())

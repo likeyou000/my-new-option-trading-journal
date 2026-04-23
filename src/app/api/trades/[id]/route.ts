@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { calculateQuantity, calculatePnl, calculatePnlPercent, calculateCharges, calculateRR, detectOutcome } from '@/lib/options'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 // GET /api/trades/[id] - Get a specific trade
 export async function GET(
@@ -8,13 +9,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
     const trade = await db.trade.findUnique({
       where: { id },
       include: { psychology: true },
     })
 
-    if (!trade) {
+    if (!trade || trade.userId !== userId) {
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
     }
 
@@ -31,7 +37,19 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
+
+    // Verify ownership
+    const existing = await db.trade.findUnique({ where: { id } })
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
+    }
+
     const body = await request.json()
 
     const {
@@ -142,7 +160,19 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
+
+    // Verify ownership
+    const existing = await db.trade.findUnique({ where: { id } })
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
+    }
+
     await db.trade.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error) {

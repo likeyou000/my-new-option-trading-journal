@@ -1,21 +1,16 @@
 import { NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
 import { db } from '@/lib/db'
-
-async function getDemoUserId() {
-  let user = await db.user.findFirst()
-  if (!user) {
-    user = await db.user.create({
-      data: { email: 'demo@tradediary.ai', name: 'Demo Trader' },
-    })
-  }
-  return user.id
-}
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 // POST /api/ai/weekly - Generate weekly AI report
 export async function POST(request: Request) {
   try {
-    const userId = await getDemoUserId()
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { days = 7 } = body
 

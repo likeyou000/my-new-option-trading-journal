@@ -277,3 +277,57 @@ Stage Summary:
 - Trailing SL field added
 - Risk/reward shown in rupees and percentages
 - App is fully options-trading ready
+---
+Task ID: 15
+Agent: Main Agent
+Task: Add Supabase Login and Sign Up authentication
+
+Work Log:
+- Installed @supabase/supabase-js and @supabase/ssr packages
+- Added NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env
+- Created /src/lib/supabase/client.ts - browser-side Supabase client using @supabase/ssr
+- Created /src/lib/supabase/server.ts - server-side Supabase client with getAuthenticatedUser/getAuthenticatedUserId helpers
+- Created /src/lib/supabase/middleware.ts - session refresh middleware
+- Created /src/middleware.ts - Next.js middleware for refreshing Supabase sessions
+- Created /src/components/auth/auth-page.tsx - Full login/signup page with:
+  - Login tab: email + password, forgot password link
+  - Sign Up tab: name + email + password
+  - Error handling and loading states
+  - Professional UI with icons and branding
+- Updated /src/app/page.tsx - Auth state management:
+  - Checks Supabase session on load
+  - Shows AuthPage when not logged in
+  - Shows AppContent (main app) when authenticated
+  - Listens for auth state changes
+  - Syncs user to local DB on first login
+  - Separated AppContent into its own component to avoid conditional hooks
+- Updated /src/components/layout/header.tsx - Added user dropdown menu:
+  - Avatar with initials
+  - User name and email display
+  - Sign Out button
+  - Optional user/onLogout props
+- Updated /src/app/api/auth/sync/route.ts - New API route:
+  - POST endpoint to sync Supabase user to local SQLite DB
+  - Uses upsert to create or update user with Supabase ID
+- Updated ALL API routes to use Supabase auth:
+  - /api/trades (GET, POST) - uses getAuthenticatedUserId()
+  - /api/trades/[id] (GET, PUT, DELETE) - verifies ownership
+  - /api/stats (GET) - uses authenticated user
+  - /api/backtest (GET, POST) - uses authenticated user
+  - /api/ai/analyze (POST) - uses authenticated user, verifies trade ownership
+  - /api/ai/weekly (POST) - uses authenticated user
+  - /api/ai/strategy (POST) - uses authenticated user
+- Updated Prisma schema: User.id removed @default(cuid()) since IDs come from Supabase
+- Reset database with fresh schema
+- All API routes return 401 for unauthenticated users
+- Trade ownership verification added (users can only access their own trades)
+- Lint clean, no errors
+
+Stage Summary:
+- Full Supabase authentication: Login, Sign Up, Forgot Password
+- User data isolated per authenticated user (no more demo user)
+- User dropdown with avatar, name, email, and sign out
+- All API routes secured with auth checks
+- Trade ownership verification enforced
+- Database uses Supabase user IDs instead of auto-generated cuids
+- Clean separation of auth page and main app

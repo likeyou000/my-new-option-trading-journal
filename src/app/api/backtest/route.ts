@@ -1,20 +1,15 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
-async function getDemoUserId() {
-  let user = await db.user.findFirst()
-  if (!user) {
-    user = await db.user.create({
-      data: { email: 'demo@tradediary.ai', name: 'Demo Trader' },
-    })
-  }
-  return user.id
-}
-
-// GET /api/backtest - Get all backtest results
+// GET /api/backtest - Get all backtest results for authenticated user
 export async function GET() {
   try {
-    const userId = await getDemoUserId()
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const results = await db.backtestResult.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -29,7 +24,11 @@ export async function GET() {
 // POST /api/backtest - Run a backtest simulation
 export async function POST(request: Request) {
   try {
-    const userId = await getDemoUserId()
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
 
     const {

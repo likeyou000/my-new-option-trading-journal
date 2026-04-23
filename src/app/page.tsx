@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect, useState, useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -12,10 +12,13 @@ import { Reports } from "@/components/reports/reports"
 import { AIAnalyzer } from "@/components/ai-analyzer/ai-analyzer"
 import { CalendarView } from "@/components/calendar/calendar-view"
 import { Backtesting } from "@/components/backtest/backtesting"
+import { AuthPage } from "@/components/auth/auth-page"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSyncExternalStore } from "react"
+import { createClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 
 // Responsive hook - detect if mobile
 const emptySubscribe = () => () => {}
@@ -50,10 +53,31 @@ function EmptyState({ onStart }: { onStart: () => void }) {
   )
 }
 
-export default function HomePage() {
+// Main app content (only shown when authenticated)
+function AppContent({ user, onLogout }: { user: User; onLogout: () => void }) {
   const { currentView, sidebarOpen } = useAppStore()
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
+
+  // Sync user to DB on mount
+  useEffect(() => {
+    const syncUser = async () => {
+      try {
+        await fetch("/api/auth/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            email: user.email,
+            name: user.user_metadata?.name || user.email?.split("@")[0] || "Trader",
+          }),
+        })
+      } catch {
+        // Silently fail - user will be created on first trade
+      }
+    }
+    syncUser()
+  }, [user])
 
   const { data: statsData } = useQuery({
     queryKey: ["stats"],
@@ -113,7 +137,7 @@ export default function HomePage() {
         !isMobile && (sidebarOpen ? "ml-60" : "ml-16"),
         isMobile && "ml-0"
       )}>
-        <AppHeader />
+        <AppHeader user={user} onLogout={onLogout} />
         <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto">
           {renderView()}
         </main>
@@ -123,4 +147,67 @@ export default function HomePage() {
       </div>
     </div>
   )
+}
+
+export default function HomePage() {
+  // Auth state
+  const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const supabase = useMemo(() => createClient(), [])
+
+  // Check auth state
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    }
+    getUser()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null)
+        setAuthLoading(false)
+        // Invalidate queries when auth changes
+        queryClient.invalidateQueries({ queryKey: ["trades"] })
+        queryClient.invalidateQueries({ queryKey: ["stats"] })
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase, queryClient])
+
+  const handleAuthSuccess = useCallback(() => {
+    // Auth state change listener will handle updating the user
+  }, [])
+
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    queryClient.clear()
+  }, [supabase, queryClient])
+
+  // Show loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 animate-pulse">
+            <BookOpen className="h-6 w-6 text-emerald-500" />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show auth page if not logged in
+  if (!user) {
+    return <AuthPage onAuthSuccess={handleAuthSuccess} />
+  }
+
+  // Show main app when authenticated
+  return <AppContent user={user} onLogout={handleLogout} />
 }

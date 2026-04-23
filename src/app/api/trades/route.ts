@@ -1,21 +1,16 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { calculateQuantity, calculatePnl, calculatePnlPercent, calculateCharges, calculateRR, detectOutcome, LOT_SIZES } from '@/lib/options'
+import { calculateQuantity, calculatePnl, calculatePnlPercent, calculateCharges, calculateRR, detectOutcome } from '@/lib/options'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
-async function getDemoUserId() {
-  let user = await db.user.findFirst()
-  if (!user) {
-    user = await db.user.create({
-      data: { email: 'demo@tradediary.ai', name: 'Demo Trader' },
-    })
-  }
-  return user.id
-}
-
-// GET /api/trades - Get all trades
+// GET /api/trades - Get all trades for authenticated user
 export async function GET(request: Request) {
   try {
-    const userId = await getDemoUserId()
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
@@ -58,7 +53,22 @@ export async function GET(request: Request) {
 // POST /api/trades - Create a new trade
 export async function POST(request: Request) {
   try {
-    const userId = await getDemoUserId()
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Ensure user exists in our DB
+    await db.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        email: `user-${userId}@tradediary.ai`,
+        name: 'Trader',
+      },
+    })
+
     const body = await request.json()
 
     const {
